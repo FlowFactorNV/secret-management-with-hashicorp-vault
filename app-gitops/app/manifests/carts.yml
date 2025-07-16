@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: carts
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: carts
+  template:
+    metadata:
+      labels:
+        app: carts
+    spec:
+      serviceAccountName: carts-sa
+      containers:
+        - name: carts
+          image: c1sv3r/app-carts:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JAVA_OPTS
+              value: "-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom"
+            - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
+              value: "true"
+            - name: SPRING_PROFILES_ACTIVE
+              value: dynamodb
+            - name: CARTS_DYNAMODB_ENDPOINT
+              value: http://carts-db:8000
+            - name: CARTS_DYNAMODB_CREATETABLE
+              value: "true"
+            - name: AWS_ACCESS_KEY_ID
+              value: key
+            - name: AWS_SECRET_ACCESS_KEY
+              value: secret
+          resources:
+            limits:
+              memory: "512Mi"
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: carts
+  namespace: app
+spec:
+  selector:
+    app: carts
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

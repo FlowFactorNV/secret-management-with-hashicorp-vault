@@ -1,0 +1,31 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: repo-repo
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  ref:
+    branch: main
+  secretRef:
+    name: flux-system
+  url: <>
+  ignore: |
+    /*
+    !/tooling/repos/**
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: repos
+  namespace: flux-system
+spec:
+  interval: 5m0s
+  path: ./tooling/repos/
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: repo-repo
+  wait: true
+  dependsOn:
+    - name: namespaces

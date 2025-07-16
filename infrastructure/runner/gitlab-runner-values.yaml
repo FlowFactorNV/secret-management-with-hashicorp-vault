@@ -1,0 +1,49 @@
+gitlabUrl: https://gitlab.com/
+runnerRegistrationToken: glrt-I1sE9NdW9Ub2e07DO9kNEG86MQpwOjE1cDVlZwp0OjMKdTpnMW1xNRg.01.1j0s4cpfb
+
+rbac:
+  create: false
+
+serviceAccount:
+  create: false
+  name: gitlab-runner  # This must match the IRSA-enabled service account in the `gitlab` namespace
+
+runners:
+  name: "kaniko-runner"
+  executor: "kubernetes"
+  namespace: "gitlab"
+  builds:
+    cpuLimit: "1"
+    memoryLimit: "1Gi"
+    cpuRequests: "500m"
+    memoryRequests: "512Mi"
+  helpers:
+    image: ""
+  cache:
+    disabled: true  # You can enable S3 or PVC cache later
+  kubernetes:
+    serviceAccount: gitlab-runner
+    podAnnotations:
+      iam.amazonaws.com/role: arn:aws:iam::134128782576:role/gitlab-runner-irsa-role
+  podSpec:
+    containers:
+      - name: build
+        image: gcr.io/kaniko-project/executor:debug
+        command:
+          - "/kaniko/executor"
+        args:
+          - "--dockerfile=Dockerfile"
+          - "--context=$(CI_PROJECT_DIR)"
+          - "--destination=${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+          - "--oci-layout-path=/kaniko/oci"
+          - "--verbosity=debug"
+        volumeMounts:
+          - name: kaniko-secret
+            mountPath: /kaniko/.docker
+    volumes:
+      - name: kaniko-secret
+        projected:
+          sources:
+            - secret:
+                name: kaniko-ecr-creds  # we'll create this secret next
+

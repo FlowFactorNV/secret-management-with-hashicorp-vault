@@ -1,0 +1,19 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: istiod
+  namespace: istio-system
+spec:
+  chart:
+    spec:
+      chart: istiod
+      sourceRef:
+        kind: HelmRepository
+        name: istio
+        namespace: istio-system
+      version: "1.25.2"
+  interval: 5m
+  targetNamespace: istio-system
+  values:
+    meshConfig:
+      accessLogFile: /dev/stdout

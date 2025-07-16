@@ -1,0 +1,14 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-catalog-inbound
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: catalog
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/app/sa/ui-sa"]

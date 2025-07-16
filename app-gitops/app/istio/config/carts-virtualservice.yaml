@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: carts
+  namespace: app
+spec:
+  hosts:
+    - carts
+  http:
+    - route:
+        - destination:
+            host: carts.app.svc.cluster.local
+            port:
+              number: 8080

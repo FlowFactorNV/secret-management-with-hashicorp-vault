@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: assets
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: assets
+  template:
+    metadata:
+      labels:
+        app: assets
+    spec:
+      serviceAccountName: assets-sa #service account for assets
+      containers:
+        - name: assets
+          image: c1sv3r/app-assets:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JAVA_OPTS
+              value: "-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom"
+          resources:
+            limits:
+              memory: "256Mi"
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: assets
+  namespace: app
+spec:
+  selector:
+    app: assets
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

@@ -1,0 +1,92 @@
+gitlabUrl: https://gitlab.com/
+runnerRegistrationToken: ${GITLAB_RUNNER_TOKEN}
+
+rbac:
+  create: false
+  rules:
+    - apiGroups: [""]
+      resources: ["secrets"]
+      verbs: ["get", "list", "create", "update", "patch", "delete"]
+    - apiGroups: [""]
+      resources: ["pods", "pods/exec", "pods/log", "pods/attach", "secrets", "configmaps"]
+      verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+    - apiGroups: ["batch"]
+      resources: ["jobs"]
+      verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+    - apiGroups: [""]
+      resources: ["serviceaccounts"]
+      verbs: ["get"]
+    - apiGroups: [""]
+      resources: ["services"]
+      verbs: ["create", "get"]
+
+
+serviceAccount:
+  create: true
+  name: gitlab-runner
+  annotations:
+    eks.amazonaws.com/role-arn: ${GITLAB_RUNNER_ROLE_ARN}
+
+runners:
+  name: "podman-runner"
+  executor: "kubernetes"
+  namespace: "gitlab"
+
+  builds:
+    cpuLimit: "1"
+    memoryLimit: "1Gi"
+    cpuRequests: "500m"
+    memoryRequests: "512Mi"
+
+  helpers:
+    image: ""  # Disable helper container
+
+  cache:
+    disabled: true
+
+  config: |
+    concurrent = 10
+    check_interval = 3
+    log_level = "info"
+    connection_max_age = "15m0s"
+    shutdown_timeout = 0
+    
+    [session_server]
+      session_timeout = 1800
+    
+    [[runners]]
+      name = "podman-runner"
+      url = "https://gitlab.com/"
+      id = 47545952
+      token = ${GITLAB_RUNNER_TOKEN}
+      token_obtained_at = 2025-05-21T11:59:58Z
+      token_expires_at = 0001-01-01T00:00:00Z
+      executor = "kubernetes"
+      [runners.cache]
+        MaxUploadedArchiveSize = 0
+        [runners.cache.s3]
+        [runners.cache.gcs]
+        [runners.cache.azure]
+      [runners.kubernetes]
+        service_account = "gitlab-runner-gitlab-runner"
+        host = ""
+        bearer_token_overwrite_allowed = false
+        image = "alpine"
+        namespace = "gitlab"
+        namespace_overwrite_allowed = ""
+        namespace_per_job = false
+        node_selector_overwrite_allowed = ""
+        node_tolerations_overwrite_allowed = ""
+        pod_labels_overwrite_allowed = ""
+        service_account_overwrite_allowed = ""
+        pod_annotations_overwrite_allowed = ""
+        [runners.kubernetes.init_permissions_container_security_context]
+          [runners.kubernetes.init_permissions_container_security_context.capabilities]
+        [runners.kubernetes.build_container_security_context]
+          [runners.kubernetes.build_container_security_context.capabilities]
+        [runners.kubernetes.helper_container_security_context]
+          [runners.kubernetes.helper_container_security_context.capabilities]
+        [runners.kubernetes.service_container_security_context]
+          [runners.kubernetes.service_container_security_context.capabilities]
+        [runners.kubernetes.volumes]
+        [runners.kubernetes.dns_config]

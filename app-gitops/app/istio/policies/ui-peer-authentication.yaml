@@ -1,0 +1,11 @@
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: ui-mtls-disable
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: ui
+  mtls:
+    mode: DISABLE

@@ -1,0 +1,47 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: external-secrets-crds
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./deploy/crds
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: external-secrets-git
+    namespace: repos
+  dependsOn:
+    - name: repos
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: eso-bootstrap-repo
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  ref:
+    branch: main
+  secretRef:
+    name: flux-system
+  url:
+  ignore: |
+    /*
+    !/tooling/eso/bootstrap/**
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: eso-bootstrap
+  namespace: flux-system
+spec:
+  interval: 5m0s
+  path: ./tooling/eso/bootstrap/
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: eso-bootstrap-repo
+  wait: true
+  dependsOn:
+    - name: external-secrets-crds

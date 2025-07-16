@@ -1,0 +1,51 @@
+# Todo: Maybe move this to bootstrap phase
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vault-init
+  namespace: vault
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: vault-kms
+      restartPolicy: Never
+      containers:
+        - name: vault-init
+          image: c1sv3r/vault-bootstrap:2.0
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              export VAULT_ADDR=http://vault-0.vault-internal.vault.svc.cluster.local:8200
+
+              echo "Waiting for Vault to be reachable at $VAULT_ADDR..."
+              until curl -s --connect-timeout 1 "${VAULT_ADDR}/v1/sys/seal-status" | grep -q 'sealed'; do
+                echo "Vault not ready yet..."
+                sleep 2
+              done
+
+              echo "Vault is ready. Checking if it's already initialized..."
+
+              if vault status | grep -q 'Sealed'; then
+                echo "Vault is sealed. Proceeding with initialization..."
+                vault operator init -format=json > /vault/init.json
+
+                VAULT_ROOT_TOKEN=$(grep '"root_token"' /vault/init.json | awk -F '"' '{print $4}')
+
+                echo "Storing Vault root token and init info in Kubernetes Secret..."
+                kubectl create secret generic vault-bootstrap-secrets \
+                  --from-file=init.json=/vault/init.json \
+                  --from-literal=root_token="$VAULT_ROOT_TOKEN" \
+                  --namespace=vault
+              else
+                echo "Vault already initialized."
+              fi
+          volumeMounts:
+            - name: vault-storage
+              mountPath: /vault
+      volumes:
+        - name: vault-storage
+          emptyDir: {}

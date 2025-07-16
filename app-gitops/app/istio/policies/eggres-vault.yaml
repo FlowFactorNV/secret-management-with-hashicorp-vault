@@ -1,0 +1,11 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-egress-to-vault
+  namespace: app
+spec:
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            hosts: ["vault.tooling.internal"]

@@ -1,0 +1,14 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-assets-to-activemq
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: activemq
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/app/sa/assets-sa"]

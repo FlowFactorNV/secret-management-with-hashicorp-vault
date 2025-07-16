@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vault-enable-k8s-auth
+  namespace: vault
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: vault-kms
+      restartPolicy: Never
+      containers:
+        - name: enable-auth
+          image: c1sv3r/vault-bootstrap:2.0
+          command:
+            - /bin/bash
+            - -c
+            - |
+              export VAULT_ADDR=http://vault.vault.svc.cluster.local:8200
+              export VAULT_TOKEN=$(cat /vault/root_token)
+              
+              echo "Waiting for Vault to be reachable at $VAULT_ADDR..."
+              until curl -s "${VAULT_ADDR}/v1/sys/health" | jq -e '.initialized and (.sealed == false)' > /dev/null; do
+                echo "Vault not initialized or unsealed..."
+                sleep 2
+              done
+
+              vault auth enable kubernetes || echo "Already enabled"
+
+              vault write auth/kubernetes/config \
+                token_reviewer_jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
+                kubernetes_host="https://${KUBERNETES_PORT_443_TCP_ADDR}:443" \
+                kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          volumeMounts:
+            - name: vault-storage
+              mountPath: /vault
+      volumes:
+        - name: vault-storage
+          secret:
+            secretName: vault-bootstrap-secrets

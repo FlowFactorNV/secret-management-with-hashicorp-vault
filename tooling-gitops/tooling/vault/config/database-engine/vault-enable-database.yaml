@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vault-enable-database
+  namespace: vault
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: vault-kms
+      restartPolicy: Never
+      containers:
+        - name: enable-db
+          image: c1sv3r/vault-bootstrap:2.0
+          command:
+            - /bin/bash
+            - -c
+            - |
+              export VAULT_ADDR=http://vault.vault.svc.cluster.local:8200
+              export VAULT_TOKEN=$(cat /vault/root_token)
+
+              echo "Waiting for Vault..."
+              until curl -s "${VAULT_ADDR}/v1/sys/health" | jq -e '.initialized and (.sealed == false)' > /dev/null; do
+                echo "Vault not ready..."
+                sleep 2
+              done
+
+              vault secrets enable -path=database database || echo "Database secrets engine already enabled"
+          volumeMounts:
+            - name: vault-storage
+              mountPath: /vault
+      volumes:
+        - name: vault-storage
+          secret:
+            secretName: vault-bootstrap-secrets

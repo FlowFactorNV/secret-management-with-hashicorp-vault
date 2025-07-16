@@ -1,0 +1,82 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: vault-repo
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  ref:
+    branch: main
+  secretRef:
+    name: flux-system
+  url: <>
+  ignore: |
+    /*
+    !/tooling/vault/bootstrap/**
+    !/tooling/vault/secrets/**
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: vault-secrets
+  namespace: flux-system
+spec:
+  interval: 5m0s
+  path: ./tooling/vault/secrets/
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: vault-repo
+  wait: true
+  dependsOn:
+    - name: eso-bootstrap
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: vault
+  namespace: flux-system
+spec:
+  interval: 5m0s
+  path: ./tooling/vault/bootstrap/
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: vault-repo
+  wait: true
+  dependsOn:
+    - name: vault-secrets
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: vault-nlb-repo
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  ref:
+    branch: main
+  secretRef:
+    name: flux-system
+  url: <>
+  ignore: |
+    /*
+    !/tooling/vault/nlb/**
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: vault-nlb
+  namespace: flux-system
+spec:
+  interval: 5m0s
+  path: ./tooling/vault/nlb/
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: vault-nlb-repo
+  wait: true
+  dependsOn:
+    - name: vault
+---
+

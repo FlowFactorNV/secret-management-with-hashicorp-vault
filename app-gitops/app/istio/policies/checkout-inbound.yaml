@@ -1,0 +1,14 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-checkout-inbound
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: checkout
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/app/sa/ui-sa"]

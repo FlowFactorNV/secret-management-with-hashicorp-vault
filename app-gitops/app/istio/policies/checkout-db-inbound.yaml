@@ -1,0 +1,14 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-checkout-to-checkout-db
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: checkout-db
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/app/sa/checkout-sa"]

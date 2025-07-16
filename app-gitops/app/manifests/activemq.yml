@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: activemq
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: activemq
+  template:
+    metadata:
+      labels:
+        app: activemq
+    spec:
+      containers:
+        - name: activemq
+          image: rmohr/activemq:5.15.9
+          ports:
+            - containerPort: 61616
+            - containerPort: 8161
+          resources:
+            limits:
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: activemq
+  namespace: app
+spec:
+  selector:
+    app: activemq
+  ports:
+    - name: amq
+      port: 61616
+      targetPort: 61616
+    - name: web
+      port: 8161
+      targetPort: 8161

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-db
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout-db
+  template:
+    metadata:
+      labels:
+        app: checkout-db
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: my-secret-pw
+            - name: MYSQL_DATABASE
+              value: checkout
+            - name: MYSQL_USER
+              value: checkout_user
+            - name: MYSQL_PASSWORD
+              value: default_password
+          resources:
+            limits:
+              memory: "512Mi"
+            requests:
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout-db
+  namespace: app
+spec:
+  selector:
+    app: checkout-db
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306

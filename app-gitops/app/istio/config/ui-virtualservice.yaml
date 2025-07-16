@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ui
+  namespace: app
+spec:
+  hosts:
+    - ui
+  gateways:
+    - mesh
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: ui.app.svc.cluster.local
+            port:
+              number: 8080

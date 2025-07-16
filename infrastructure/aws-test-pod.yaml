@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: irsa-test
+  namespace: eso
+spec:
+  serviceAccountName: eso-irsa-sa
+  containers:
+  - name: aws-cli
+    image: amazonlinux:2
+    command: ["/bin/sh"]
+    args: ["-c", "yum install -y aws-cli jq && aws sts get-caller-identity && sleep 3600"]
+    env:
+    - name: AWS_REGION
+      value: eu-west-1

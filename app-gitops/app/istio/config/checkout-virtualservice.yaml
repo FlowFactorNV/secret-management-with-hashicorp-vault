@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: checkout
+  namespace: app
+spec:
+  hosts:
+    - checkout
+  http:
+    - route:
+        - destination:
+            host: checkout.app.svc.cluster.local
+            port:
+              number: 8080

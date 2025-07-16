@@ -1,0 +1,14 @@
+regions:
+  - "eu-west-1"
+
+account-blocklist:
+  - "999999999999"  # Fake account ID for validation
+
+accounts:
+  "134128782576":
+    account-alias: "my-sandboxxxx"  # Use the alias you set
+    filters: {}  # Deletes everything
+
+resource-types:
+  exclude:
+    - CloudFormationStack

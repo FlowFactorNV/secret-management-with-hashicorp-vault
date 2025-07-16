@@ -1,0 +1,79 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vault-configure-db-{{ .Values.db.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: vault-kms
+      restartPolicy: Never
+      containers:
+        - name: configure-db
+          image: {{ .Values.image }}
+          env:
+            - name: VAULT_ADDR
+              value: "{{ .Values.vaultAddr }}"
+            - name: DB_NAME
+              value: "{{ .Values.db.name }}"
+            - name: DB_ROLE
+              value: "{{ .Values.db.role }}"
+            - name: DB_USER
+              value: '{{ .Values.db.username | default "root" }}'
+            - name: DB_PASS
+              value: '{{ .Values.db.password | default "rootpassword" }}'
+            - name: DB_HOST
+              value: "{{ .Values.db.host }}"
+            - name: DB_PORT
+              value: "{{ .Values.db.port }}"
+            - name: DB_NAME_IN_ENGINE
+              value: "{{ .Values.db.engineName }}"
+            - name: DB_ENGINE_PLUGIN
+              value: '{{ .Values.db.plugin | default "mysql-database-plugin" }}'
+            - name: DB_CONN_URL
+              value: "{{ .Values.db.connectionUrl }}"
+            - name: DB_DEFAULT_TTL
+              value: "{{ .Values.db.defaultTtl }}"
+            - name: DB_MAX_TTL
+              value: "{{ .Values.db.maxTtl }}"
+            - name: DB_CREATION_STATEMENTS
+              value: "{{ .Values.db.creationStatements }}"
+          command:
+            - /bin/bash
+            - -c
+            - |
+              export VAULT_TOKEN=$(cat /vault/root_token)
+
+              echo "Waiting for Vault to be reachable at $VAULT_ADDR..."
+              until curl -s "${VAULT_ADDR}/v1/sys/health" | jq -e '.initialized and (.sealed == false)' > /dev/null; do
+                echo "Vault not initialized or unsealed..."
+                sleep 2
+              done
+
+              echo "Configuring database secrets engine..."
+              echo 'vault write database/config/${DB_NAME} plugin_name="${DB_ENGINE_PLUGIN}" allowed_roles="${DB_ROLE}" connection_url="${DB_CONN_URL}" username="${DB_USER}" password="${DB_PASS}"'
+              vault write database/config/${DB_NAME} \
+                plugin_name="${DB_ENGINE_PLUGIN}" \
+                allowed_roles="${DB_ROLE}" \
+                connection_url="${DB_CONN_URL}" \
+                username="${DB_USER}" \
+                password="${DB_PASS}"
+
+              echo "Creating database role..."
+
+              echo "vault write database/roles/${DB_ROLE} db_name=${DB_NAME} creation_statements=${DB_CREATION_STATEMENTS} default_ttl=${DB_DEFAULT_TTL} max_ttl=${DB_MAX_TTL}"
+              
+              vault write database/roles/${DB_ROLE} \
+                db_name=${DB_NAME} \
+                creation_statements="${DB_CREATION_STATEMENTS}" \
+                default_ttl=${DB_DEFAULT_TTL} \
+                max_ttl=${DB_MAX_TTL}
+
+          volumeMounts:
+            - name: vault-storage
+              mountPath: /vault
+      volumes:
+        - name: vault-storage
+          secret:
+            secretName: vault-bootstrap-secrets

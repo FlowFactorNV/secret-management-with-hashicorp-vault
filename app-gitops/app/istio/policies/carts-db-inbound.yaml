@@ -1,0 +1,14 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-carts-to-carts-db
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: carts-db
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/app/sa/carts-sa"]

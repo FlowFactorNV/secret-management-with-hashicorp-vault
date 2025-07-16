@@ -1,0 +1,6 @@
+global:
+  enabled: false
+  externalVaultAddr: http://k8s-vault-vaultnlb-71f926dc1f-e70c0ae908aa43a8.elb.eu-west-1.amazonaws.com:8200
+injector:
+  enabled: true
+  externalVaultAddr: http://k8s-vault-vaultnlb-71f926dc1f-e70c0ae908aa43a8.elb.eu-west-1.amazonaws.com:8200

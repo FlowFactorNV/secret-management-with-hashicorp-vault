@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      serviceAccountName: checkout-sa
+      containers:
+        - name: checkout
+          image: c1sv3r/app-checkout:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JAVA_OPTS
+              value: "-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom"
+            - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
+              value: "true"
+            - name: SPRING_PROFILES_ACTIVE
+              value: mysql,activemq
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://checkout-db:3306/checkout
+            - name: SPRING_DATASOURCE_USERNAME
+              value: checkout_user
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: default_password
+            - name: SPRING_ACTIVEMQ_BROKERURL
+              value: tcp://activemq:61616
+          resources:
+            limits:
+              memory: "512Mi"
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout
+  namespace: app
+spec:
+  selector:
+    app: checkout
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

@@ -1,0 +1,13 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: vault-nlb-external
+spec:
+  hosts:
+  - vault.tooling.internal
+  location: MESH_EXTERNAL
+  ports:
+  - number: 8200
+    name: http
+    protocol: HTTP
+  resolution: DNS

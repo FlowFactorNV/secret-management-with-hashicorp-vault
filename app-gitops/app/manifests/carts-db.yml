@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: carts-db
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: carts-db
+  template:
+    metadata:
+      labels:
+        app: carts-db
+    spec:
+      containers:
+        - name: dynamodb-local
+          image: amazon/dynamodb-local:1.13.1
+          resources:
+            limits:
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: carts-db
+  namespace: app
+spec:
+  selector:
+    app: carts-db
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

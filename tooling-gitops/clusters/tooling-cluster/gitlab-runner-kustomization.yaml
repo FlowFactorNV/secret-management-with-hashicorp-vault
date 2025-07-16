@@ -1,0 +1,53 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: gitlab-runner-repo
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  ref:
+    branch: main
+  secretRef:
+    name: flux-system
+  url: <>
+  ignore: |
+    /*
+    !/tooling/gitlab-runner/**
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gitlab-runner-secrets
+  namespace: flux-system
+spec:
+  interval: 5m0s
+  path: ./tooling/gitlab-runner/secrets/
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: gitlab-runner-repo
+  wait: true
+  dependsOn:
+    - name: eso-bootstrap
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gitlab-runner-bootstrap
+  namespace: flux-system
+spec:
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: bootstrap-secrets
+      - kind: Secret
+        name: gitlab-runner-token
+  interval: 5m0s
+  path: ./tooling/gitlab-runner/bootstrap/
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: gitlab-runner-repo
+  wait: true
+  dependsOn:
+    - name: gitlab-runner-secrets

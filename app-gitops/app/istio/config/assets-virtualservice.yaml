@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: assets
+  namespace: app
+spec:
+  hosts:
+    - assets
+  http:
+    - route:
+        - destination:
+            host: assets.app.svc.cluster.local
+            port:
+              number: 8080

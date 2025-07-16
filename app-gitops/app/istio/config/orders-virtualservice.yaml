@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: orders
+  namespace: app
+spec:
+  hosts:
+    - orders
+  http:
+    - route:
+        - destination:
+            host: orders.app.svc.cluster.local
+            port:
+              number: 8080

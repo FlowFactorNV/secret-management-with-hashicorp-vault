@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vault-kv-init
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      serviceAccountName: vault-kms
+      restartPolicy: Never
+      containers:
+        - name: vault-kv-init
+          image: hashicorp/vault:1.15.0
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              vault login "$VAULT_TOKEN"
+
+              # Enable KV if not enabled already
+              if ! vault secrets list -format=json | grep -q '"{{ .Values.kv.mountPath }}/"'; then
+                vault secrets enable -path={{ .Values.kv.mountPath }} kv-v2
+              fi
+
+              vault kv put {{ .Values.kv.mountPath }}/{{ .Values.kv.secretPath }} \
+              {{- range $k, $v := .Values.kv.data }}
+                {{ $k }}="{{ $v }}" \
+              {{- end }}
+
+          env:
+            - name: VAULT_ADDR
+              value: "{{ .Values.vault.addr }}"
+          volumeMounts:
+            - name: vault-storage
+              mountPath: /vault
+      volumes:
+        - name: vault-storage
+          emptyDir: {}
+              export VAULT_ADDR=${VAULT_ADDR}
