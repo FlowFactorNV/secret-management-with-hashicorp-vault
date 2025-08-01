@@ -13,8 +13,7 @@ This repository contains a complete setup for running HashiCorp Vault in a secur
 - **Dynamic secrets**: Automatic database credential rotation with configurable TTL
 - **Complete documentation**: 140+ pages covering architecture decisions, implementation details, and lessons learned
 
-
-### Prerequisites
+## Prerequisites
 
 As documented in section 10.1:
 - AWS CLI configured with appropriate permissions
@@ -24,29 +23,35 @@ As documented in section 10.1:
 - Access to AWS account with permissions to create EKS clusters, VPCs, IAM roles, Load Balancers and VPNs
 - Git repository with GitOps configuration
 
-### Deployment Steps
+## Deployment Steps
 
 Follow the installation guide in section 10:
 
-```bash
-# 1. Clone the infrastructure repository
+### 1. Clone the infrastructure repository
+```
 git clone [your-repo-url]
 cd /infra
+```
 
-# 2. Initialize Terraform
+#### 2. Initialize Terraform
+```
 terraform init
 terraform plan
 terraform apply
+```
 
-# 3. After infrastructure is created, uncomment modules in main.tf for:
-# - Kubernetes modules
-# - Flux bootstrap
-# - VPN configuration
+#### 3. After infrastructure is created, uncomment modules in main.tf for:
 
-# 4. Run Terraform again
+- Kubernetes modules
+- Flux bootstrap
+- VPN configuration
+
+#### 4. Run Terraform again
+```
 terraform apply
+```
 
-Accessing Vault
+### Accessing Vault
 
 As documented in section 7, Vault is only accessible internally:
 Generate VPN config: cd infrastructure/vpn && ./generate-config.sh
@@ -60,34 +65,34 @@ Repository Structure
 ├── infrastructure/    # Terraform modules and cluster configurations
 └── tooling-gitops/    # Tooling configurations (Vault, GitLab Runner, ESO)
 
-Troubleshooting
+## Troubleshooting
 
-Vault Bootstrap Issues (Section 10.5)
+### Vault Bootstrap Issues (Section 10.5)
 
 If Vault bootstrap crashes during first synchronization:
 
-bash
-
+```
 kubectl delete kustomization vault-bootstrap -n flux-system
 kubectl delete secret vault-bootstrap-secret -n flux-system
 flux reconcile kustomization vault-bootstrap --with-source
+```
 
-GitLab Runner Setup (Section 10.6)
+### GitLab Runner Setup (Section 10.6)
 
 Add runner registration token to Vault:
 
-bash
-
+```
 vault kv put kv/gitlab/runner registrationToken=<your_token>
+```
 
-Documentation
+## Documentation
 
 For complete details including architecture decisions and implementation notes:
 
-📖 Full Documentation (English)
-📖 Volledige Documentatie (Nederlands)
+📖 [Full Documentation](docs/en.md) (English)
+📖 [Volledige Documentatie](docs/nl.md) (Nederlands)
 
-Architecture Highlights
+## Architecture Highlights
 
 - Multi-cluster setup for separation of concerns 
 - HashiCorp Vault with Kubernetes auth method 
@@ -95,6 +100,6 @@ Architecture Highlights
 - GitLab Runner with Podman for secure CI/CD 
 - Internal NLB + Route 53 for secure Vault access
 
-Disclaimer
+## Disclaimer
 
 📌 Test before deploying. Adjust for your needs. And if you need help? You know where to find us.
