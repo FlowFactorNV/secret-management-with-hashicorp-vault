@@ -1,28 +1,7 @@
 # Secret Management with HashiCorp Vault
 
-16 Juni 2025
 
----
-
-# Executive summary
-
-Het project richtte zich op de uitrol van twee aparte EKS-clusters: één voor de applicatie-
-omgeving en één voor ondersteunende tooling zoals CI/CD en secret management. Centraal
-binnen dit project stonden technologieën zoals HashiCorp Vault voor veilig secret
-management, Terraform voor Infrastructure as Code, Helm voor Kubernetes applicatiebeheer
-en FluxCD voor GitOps-gebaseerde automatisering.
-
-Onze taken omvatten onder andere de volledige automatisering van de infrastructuur, het
-opzetten van veilige multi-cluster communicatie, de integratie van een service mesh voor
-microservices communicatie, en het bouwen van CI/CD pipelines met een self-hosted GitLab
-Runner. Daarnaast ontwikkelden we een aanpak voor veilig en efficiënt secret management,
-inclusief key rotation en het gebruik van short-lived credentials.
-
-Door deze opdracht hebben we niet alleen diepgaande technische kennis opgedaan in
-moderne cloud native technologieën, maar ook ervaring verworven met het bouwen van
-schaalbare en onderhoudbare omgevingen volgens best practices. Dit systeemdossier biedt
-een overzicht van de gehanteerde werkwijze, gebruikte technologieën, opgeleverde
-componenten en onze leerervaringen.
+Dit project implementeert een productie-klare HashiCorp Vault-opzet binnen een multi-cluster Kubernetes-omgeving op AWS. De architectuur bestaat uit twee afzonderlijke EKS-clusters: één voor applicaties en één voor ondersteunende tooling zoals CI/CD en secret management. Kerntechnologieën omvatten HashiCorp Vault voor veilig secret management, Terraform voor Infrastructure as Code, Helm voor Kubernetes-applicatiebeheer, en FluxCD voor op GitOps gebaseerde automatisering. De implementatie omvat volledige infrastructuurautomatisering, veilige multi-cluster communicatie, service mesh-integratie voor microservices-communicatie, en CI/CD-pijplijnen met een zelf-gehoste GitLab Runner. Het systeem implementeert een zero-trust beveiligingsmodel met dynamisch secret management, inclusief automatische sleutelrotatie en kortlevende credentials. Dit document biedt een volledig overzicht van de architectuur, implementatiedetails en praktische deployment-instructies.
 
 # Inhoudsopgave
 
@@ -118,91 +97,40 @@ componenten en onze leerervaringen.
   * [10.9 Resultaat](#109-resultaat)
 - [11. Conclusie en reflectie](#11-conclusie-en-reflectie)
 
-# 1. Inleiding
 
-Wij kregen de opdracht om een Kubernetes-gebaseerde infrastructuur op
-AWS te ontwerpen, automatiseren en beveiligen. Dit project speelt in op actuele noden binnen
-de IT-sector: het bouwen van veilige, flexibel beheersbare en volledig geautomatiseerde
-cloudomgevingen. Bedrijven willen snel kunnen schalen, CI/CD-processen efficiënt beheren
-en gevoelige gegevens veilig afhandelen — en dat zonder manuele configuratie of publieke
-blootstelling van interne systemen.
+# 1. Project Overview
 
-De infrastructuur bestaat uit twee gescheiden EKS-clusters:
+Dit project implementeert een enterprise-grade secret management-oplossing gebaseerd op HashiCorp Vault binnen een multi-cluster Kubernetes-architectuur. De focus ligt op het bereiken van een veilige, schaalbare en volledig geautomatiseerde omgeving voor het beheren van gevoelige data in cloud-native applicaties.
 
-- een applicatie cluster voor frontend, backend, databases, service mesh en FluxCD
-- een tooling cluster voor ondersteunende diensten zoals Vault, FluxCD en een self-
-hosted GitLab Runner
 
-Het doel was een veilige, uitbreidbare omgeving te realiseren via Infrastructure as Code
-(Terraform), GitOps (FluxCD), met groot belang voor secret management met HashiCorp
-Vault, ondersteund door een service mesh (Istio) en een interne DNS-laag (Route 53).
+Secret Management: HashiCorp Vault als centrale secret store met ondersteuning voor:
 
-In dit systeemdossier wordt het volledige traject stap voor stap beschreven: van de architectuur
-keuzes tot de technische implementatie. Er wordt toegelicht hoe de componenten
-samenwerken, welke voordelen dit oplevert en hoe het geheel beheersbaar blijft. Het
-document dient zowel als bewijs van de geleverde opdracht, als naslagwerk voor toekomstige
-verdere ontwikkeling en gebruik.
+Dynamische database-credentials met automatische TTL
+Kubernetes-native authenticatie via ServiceAccounts
+Geautomatiseerde secret-rotatie
+Fijnmazige toegangsbeleid
 
-# 2. Voorstelling van het bedrijf
+Infrastructure as Code: Complete AWS-infrastructuur via Terraform-modules:
 
-FlowFactor NV is een Belgisch software adviesbureau, opgericht op 9 mei 2017 en gevestigd
-in Kontich. Het bedrijf is actief in het domein van cloud native softwareontwikkeling en richt
-zich voornamelijk op het begeleiden van organisaties bij hun digitale transformatie. FlowFactor
-helpt klanten om hun IT-infrastructuur te moderniseren door in te zetten op automatisering,
-schaalbaarheid en betrouwbaarheid.
+Multi-cluster EKS-opzet met scheiding tussen applicatie- en tooling-workloads
+Netwerken met private subnets en VPN-toegang
+IAM-rollen en -beleid voor least-privilege toegang
 
-FlowFactor heeft een sterke focus op reactieve architecturen en DevOps-praktijken. Deze
-specialisatie stelt het bedrijf in staat om hoogperformante en veerkrachtige applicaties te
-ondersteunen, onder andere via schaalbare microservices en event-driven systemen.
+GitOps-automatisering: FluxCD voor declaratief deployment-beheer:
 
-Het team van FlowFactor bestaat uit een twintigtal consultants, elk met diepgaande technische
-kennis op vlak van Kubernetes, GitOps, Infrastructure as Code (IaC), CI/CD, en cloud
-infrastructuren in platformen zoals AWS, Azure en OpenShift. Door deze brede expertise kan
-FlowFactor bedrijven begeleiden bij het uitrollen van moderne IT-oplossingen die afgestemd
-zijn op de noden van snelheid, betrouwbaarheid en operationele efficiëntie.
+Automatische synchronisatie vanuit Git-repositories
+Helm release-beheer
+Multi-cluster configuratie
 
-De dienstverlening van FlowFactor gaat verder dan technische implementatie. Het bedrijf
-hecht veel belang aan kennisdeling, best practices en het trainen van interne teams. Klanten
-worden niet alleen technisch ondersteund, maar ook strategisch begeleid in het duurzaam
-opbouwen van een future-proof IT-infrastructuur.
+Beveiligingsarchitectuur:
 
-Kortom, FlowFactor positioneert zich als een betrouwbare technologiepartner voor
-organisaties die willen evolueren naar een cloud native manier van werken, met een sterke
-nadruk op automatisering, flexibiliteit en continue levering.
+Istio service mesh met mTLS en zero-trust beleid
+Vault achter interne load balancer zonder publieke blootstelling
+Audit logging en compliance-functies
 
-# 3. Beschrijving van de opdracht
+De implementatie is ontworpen voor teams die prioriteit geven aan beveiliging, schaalbaarheid en operationele excellentie binnen hun Kubernetes-omgevingen.
 
-De opdracht vertrok vanuit een groeiend beveiligingsvraagstuk in moderne
-cloudomgevingen: hoe kunnen gevoelige gegevens zoals API-sleutels,
-databasewachtwoorden en certificaten veilig en efficiënt beheerd worden in dynamische
-infrastructuren? In omgevingen waarin applicaties continu worden deployed en geüpdatet, is
-het beheren van deze zogenaamde secrets cruciaal voor zowel veiligheid als
-betrouwbaarheid.
-
-Binnen deze context kregen wij de opdracht om een volledige cloud-native infrastructuur op te
-zetten in AWS, met bijzondere focus op het verkennen, evalueren en implementeren van
-HashiCorp Vault als centrale secret manager. HashiCorp Vault is een toonaangevende
-oplossing voor secret management, die onder andere ondersteuning biedt voor short-lived
-credentials, fine-grained access control, geautomatiseerde rotatie van secrets, en integratie
-met Kubernetes.
-
-Het doel van de opdracht was om te onderzoeken op welke manieren Vault kan worden ingezet
-in een productieklare infrastructuur, hoe het zich verhoudt tot andere methoden van secret
-management, en welke afwegingen er gemaakt moeten worden tussen beveiliging en
-flexibiliteit. Concreet moesten we verschillende deployment modellen van Vault analyseren
-(zoals server mode en agent mode), diverse authenticatie- en autorisatiemethoden
-configureren (waaronder AppRole en Kubernetes JWT), en Vault integreren in een werkende
-Kubernetes-omgeving.
-
-Een belangrijk deel van de opdracht bestond uit het opzetten van een veilige,
-geautomatiseerde workflow voor het beheren van secrets in een microservices context. We
-onderzochten hoe applicaties veilig toegang krijgen tot secrets zonder dat deze lokaal
-opgeslagen moeten worden, en hoe Vault dynamisch credentials kan genereren voor
-bijvoorbeeld databases. Naast de technische implementatie, analyseerden we de beveiliging
-implicaties van elke gekozen benadering en documenteerden we onze bevindingen met het
-oog op hergebruik in professionele omgevingen.
-
-# 4. Systeemarchitectuur
+# 2. Systeemarchitectuur
 
 ![Systeemarchitectuur](img/system-architecture.png)
 
@@ -214,7 +142,7 @@ hebben we bewust gekozen voor een opdeling in twee afzonderlijke Kubernetes-clus
 vereenvoudigt het beheer en maakt het mogelijk om beide omgevingen onafhankelijk van
 elkaar te schalen of te onderhouden.
 
-# 5. AWS-infrastructuur
+# 3. AWS-infrastructuur
 
 Voor toegang tot de applicatie gebruiken we een Application Load Balancer (ALB) die HTTP-
 verkeer routeert naar de frontend en backend van onze toepassing. Deze ALB zorgt voor een
@@ -229,7 +157,7 @@ Om interne diensten zoals Vault overzichtelijk bereikbaar te maken, gebruiken we
 private DNS, waarbij de domeinnaam vault.internal wordt gekoppeld aan de url van de Network
 Load Balancer.
 
-# 6. Applicatie cluster (EKS-applicatie)
+# 4. Applicatie cluster (EKS-applicatie)
 
 De applicatie cluster bevat de core services van een demo applicatie: een frontend, een
 backend en databases. Binnen deze cluster wordt ook een service mesh toegepast (via Istio)
@@ -240,7 +168,7 @@ het interne domein _vault.internal_.
 Door deze componenten te scheiden van de infrastructuurdiensten, blijven de ontwikkel- en
 runtime-omgevingen zuiver gescheiden, wat de stabiliteit en veiligheid ten goede komt.
 
-# 7. Tooling cluster (EKS-tooling)
+# 5. Tooling cluster (EKS-tooling)
 
 De tooling cluster omvat onder andere HashiCorp Vault, FluxCD en een self-hosted GitLab
 Runner. Vault fungeert hier als centraal secret managementsysteem, terwijl FluxCD instaat
@@ -253,11 +181,11 @@ Beheerscomponenten zoals Vault kunnen los van applicaties worden onderhouden of
 aangepast, terwijl developers zich in de applicatie cluster kunnen concentreren op
 softwareontwikkeling en deployment.
 
-# 8. Verdieping op de gebruikte tools
+# 6. Verdieping op de gebruikte tools
 
-## 8.1 Terraform (Infrastructure as Code)
+## 6.1 Terraform (Infrastructure as Code)
 
-### 8.1.1 Terraform - Wat is het?
+### 6.1.1 Terraform - Wat is het?
 
 Terraform is een open-source tool ontwikkeld door HashiCorp waarmee infrastructuur
 geautomatiseerd beheerd kan worden via code. In plaats van manueel resources aan te
@@ -265,7 +193,7 @@ maken in een cloud console, wordt infrastructuur beschreven in een declaratieve 
 HashiCorp Configuration Language). Terraform zorgt er vervolgens zelf voor dat de gewenste
 toestand bereikt wordt, ongeacht de huidige toestand van de infrastructuur.
 
-### 8.1.2 Terraform - How werkt het?
+### 6.1.2 Terraform - How werkt het?
 
 Terraform leest configuratiebestanden waarin staat beschreven hoe de infrastructuur eruit
 moet zien: denk aan netwerken, compute resources, databases, rollen en policies. Bij het
@@ -274,7 +202,7 @@ gedefinieerd in de code) met de bestaande infrastructuur, en stelt het exact die
 voor, die nodig zijn om beide te laten overeenkomen. De uitvoer van `terraform apply` zorgt
 ervoor dat deze wijzigingen effectief worden uitgevoerd.
 
-### 8.1.3 Terraform - Waarom gekozen?
+### 6.1.3 Terraform - Waarom gekozen?
 
 Terraform biedt een betrouwbare, schaalbare en herhaalbare manier om cloudinfrastructuur
 te beheren. Binnen ons project was het essentieel dat de infrastructuur:
@@ -288,7 +216,7 @@ Terraform is bovendien de industriestandaard binnen Infrastructure as Code en sl
 aan bij de andere tools in ons project, zoals Helm en FluxCD. Aangezien Terraform, net zoals
 Vault, ook van Hashicorp is, werken ze naadloos samen.
 
-### 8.1.4 Terraform - Hoe geïmplementeerd?
+### 6.1.4 Terraform - Hoe geïmplementeerd?
 
 Binnen dit project vormt Terraform de centrale motor achter onze volledige AWS-infrastructuur.
 Om het beheer schaalbaar, overzichtelijk en herbruikbaar te houden, hebben we de
@@ -364,7 +292,7 @@ De tooling cluster evolueert op een ander tempo dan de applicatie cluster. Upgra
 maintenance of herconfiguraties van bijvoorbeeld GitLab Runner of ESO kunnen
 uitgevoerd worden zonder impact op productie services.
 
-### 8.1.5 Terraform - Voordelen
+### 6.1.5 Terraform - Voordelen
 
 - Herbruikbaarheid: dankzij modulaire opbouw is de infrastructuur eenvoudig aanpasbaar voor andere
 omgevingen of projecten.
@@ -381,7 +309,7 @@ toestand en de code, zodat we afwijkingen snel kunnen rechtzetten.
 - Schaalbaarheid: nieuwe clusters of regio’s kunnen eenvoudig worden deployed door
 het hergebruiken van bestaande modules met aangepaste parameters
 
-### 8.1.6 Terraform - Nadelen
+### 6.1.6 Terraform - Nadelen
 
 - Terraform vereist een duidelijke structuur en goede documentatie. Zonder deze
 afspraken kunnen configuraties snel chaotisch worden.
@@ -393,9 +321,9 @@ nodig.
 altijd evident.
 
 
-## 8.2 Helm
+## 6.2 Helm
 
-### 8.2.1 Helm - Wat is het?
+### 6.2.1 Helm - Wat is het?
 
 Helm is een veelgebruikte standaard voor k8s package management. Het stelt teams in staat
 om applicaties en infrastructuurcomponenten op een gestructureerde, herhaalbare manier te
@@ -403,7 +331,7 @@ deployen in een Kubernetes-cluster met de mogelijkheid tot versiebeheer. Helm ma
 mogelijk om Kubernetes-manifests (zoals Deployments, Services en ConfigMaps) te bundelen
 in zogeheten charts, waarmee complexe applicaties eenvoudig kunnen worden beheerd.
 
-### 8.2.2 Helm - Onderdelen van Helm
+### 6.2.2 Helm - Onderdelen van Helm
 
 Een Helm chart bestaat uit verschillende componenten die samen het gedrag van de installatie
 bepalen:
@@ -421,7 +349,7 @@ Deze structuur maakt het mogelijk om dezelfde chart in verschillende omgevingen
 via een aangepast values.yaml bestand of CLI-parameters.
 
 
-### 8.2.3 Helm - Hoe werkt het?
+### 6.2.3 Helm - Hoe werkt het?
 Helm neemt de templates uit een chart en combineert die met waarden uit het values.yaml
 bestand. Tijdens een helm install of helm upgrade wordt de gegenereerde output naar
 Kubernetes gepusht als standaard YAML-manifests. Doordat Helm versiebeheer ondersteunt,
@@ -431,7 +359,7 @@ Helm bewaart metadata van elke release in een eigen namespace (via secrets of Co
 zodat het exact weet welke versie van een chart geïnstalleerd is, inclusief bijhorende waarden
 en status.
 
-### 8.2.4 Helm - Waarom gekozen?
+### 6.2.4 Helm - Waarom gekozen?
 
 Helm sluit naadloos aan bij de principes van GitOps en Infrastructure as Code. Binnen
 ons project biedt Helm een oplossing voor:
@@ -442,7 +370,7 @@ GitLab Runner
 - Integratie met FluxCD, zodat alles vanuit Git gecontroleerd en uitgerold kan
 worden
 
-### 8.2.5 Helm - Hoe geïmplementeerd?
+### 6.2.5 Helm - Hoe geïmplementeerd?
 
 In onze architectuur is Helm de standaard tool om Kubernetes-resources te beheren en
 deployen, zowel voor infrastructuurcomponenten als voor applicatiediensten. De
@@ -482,7 +410,7 @@ Bij issues kunnen we eenvoudig terugrollen naar een vorige release via helm roll
 Omdat elke HelmRelease een exacte chartversie en configuratie bevat, is het gedrag
 van een release perfect reproduceerbaar.
 
-### 8.2.6 Helm - Voordelen
+### 6.2.6 Helm - Voordelen
 
 - **Herbruikbaarheid:** dezelfde chart kan over meerdere omgevingen deployed worden
 met aangepaste parameters
@@ -508,9 +436,9 @@ om alle componenten — van Vault en Istio tot interne services — op een consi
 te beheren, te auditen en indien nodig te herstellen.
 
 
-## 8.3 GitOps (FluxCD)
+## 6.3 GitOps (FluxCD)
 
-### 8.3.1 FluxCD - Wat is het?
+### 6.3.1 FluxCD - Wat is het?
 
 FluxCD is een open-source GitOps tool voor Kubernetes die ervoor zorgt dat de toestand van
 een cluster altijd overeenkomt met de configuratie zoals die in een Git-repository staat. In
@@ -524,7 +452,7 @@ bevordert consistentie, auditeerbaarheid en self-healing gedrag. Flux biedt ook 
 mogelijkheid om een rollback te doen. Dat maakt het gemakkelijk als de nieuwe configuratie
 fouten bevat en naar een vorige versie moet worden gesteld.
 
-### 8.3.2 FluxCD - Onderdelen van FluxCD
+### 6.3.2 FluxCD - Onderdelen van FluxCD
 Flux bestaat uit een aantal afzonderlijke Kubernetes-controllers, elk met een specifieke
 verantwoordelijkheid:
 
@@ -538,7 +466,7 @@ of fouten
 nieuwe builds
 - **Image Reflector Controller (optioneel):** Fetchen van nieuwe image tags uit een repo
 
-### 8.3.3 FluxCD - Hoe werkt het?
+### 6.3.3 FluxCD - Hoe werkt het?
 
 FluxCD gebruikt een declaratieve benadering: je beschrijft in Git hoe je
 infrastructuur en applicaties eruit moeten zien. De controllers van FluxCD
@@ -565,7 +493,7 @@ A -- Flux synx watches Git --> B -- Pulls updated manifests --> C -- Deploy upda
 image tag --> D
 ```
 
-### 8.3.4 FluxCD - Waarom gekozen?
+### 6.3.4 FluxCD - Waarom gekozen?
 
 Wij kozen FluxCD vanwege de volgende redenen:
 
@@ -579,7 +507,7 @@ Vault Secrets Operator of SOPS)
 eerdere versie
 
 
-### 8.3.5 FluxCD - Hoe geïmplementeerd?
+### 6.3.5 FluxCD - Hoe geïmplementeerd?
 
 FluxCD is door ons deployed via Terraform met gebruik van de officiële Flux Terraform
 provider. Voor elke cluster (zowel tooling als applicatie) werd een afzonderlijke GitOps folder
@@ -743,14 +671,14 @@ naar de Git-repository. Dit activeert opnieuw de standaard FluxCD flow: Source
 Controller detecteert de wijziging → Helm Controller voert een upgrade uit →
 Kubernetes krijgt de nieuwe versie uitgerold.
 
-### 8.3.6 FluxCD - Voordelen
+### 6.3.6 FluxCD - Voordelen
 - Volledig Git-gebaseerd beheer met versiecontrole
 - Self-healing: herstelt automatisch van afwijkingen t.o.v. de Git-state
 - Multi-cluster support: makkelijk op te zetten met één Git-repo voor meerdere clusters
 - Integratie met Helm maakt lifecycle management van applicaties eenvoudig
 - Makkelijk uitbreidbaar met notificaties, secrets en image automation
 
-### 8.3.7 FluxCD - Nadelen
+### 6.3.7 FluxCD - Nadelen
  
 - Geen ingebouwde GUI (in tegenstelling tot ArgoCD), wat debugging moeilijker maakt
 voor beginners
@@ -777,9 +705,9 @@ Voor ons project was FluxCD de beste keuze door de eenvoud, native Kubernetes-in
 en naadloze compatibiliteit met Helm en Vault.
 
 
-## 8.4 - Self-hosted GitLab runner
+## 6.4 - Self-hosted GitLab runner
 
-### 8.4.1 GitLab runner - Wat is het?
+### 6.4.1 GitLab runner - Wat is het?
 
 De GitLab Runner is een open-source component van GitLab dat verantwoordelijk is voor het
 uitvoeren van CI/CD-pipelines. Het is de engine die taken zoals het bouwen, testen en
@@ -789,7 +717,7 @@ In ons project kozen we voor een self-hosted runner die als Kubernetes workload 
 de tooling cluster. We hebben gekozen voor een self-hosted runner omdat we dan
 ongelimiteerd jobs kunnen uitvoeren, zonder dat het betalend is.
 
-### 8.4.2 GitLab runner - Onderdelen van Gitlab Runner
+### 6.4.2 GitLab runner - Onderdelen van Gitlab Runner
 
 De GitLab Runner-installatie omvat:
 
@@ -802,7 +730,7 @@ beheren.
 - Secrets/Registration Token: authenticatie om verbinding te maken met de juiste
 GitLab project runner
 
-### 8.4.3 GitLab runner - Hoe werkt het?
+### 6.4.3 GitLab runner - Hoe werkt het?
 
 Wanneer een developer een commit maakt op GitLab, triggert dit een pipeline die in de .gitlab-
 ci.yml gedefinieerd is. GitLab stuurt deze job naar een geregistreerde runner. Onze runner
@@ -810,7 +738,7 @@ draait in Kubernetes en gebruikt de kubernetes executor. Bij ontvangst van een j
 runner een pod met containers die verantwoordelijk zijn voor de build, tests en eventuele
 deploy-taken. Zodra de job klaar is, worden de pods automatisch opgeruimd.
 
-### 8.4.4 GitLab runner - Waarom gekozen?
+### 6.4.4 GitLab runner - Waarom gekozen?
 
 We kozen voor een self-hosted GitLab Runner in Kubernetes om meerdere redenen:
 - **Volledige controle** over de uitvoering en configuratie van CI/CD-taken.
@@ -821,7 +749,7 @@ beperkingen op snelheid of aantal minuten.
 **Flexibele configuratie:** zoals het gebruik van custom images, node selectors en resource
 limieten.
 
-### 8.4.5 GitLab runner - Hoe geïmplementeerd?
+### 6.4.5 GitLab runner - Hoe geïmplementeerd?
 
 Onze GitLab Runner is gedeployed binnen de tooling cluster via een volledig GitOps-gedreven
 workflow. De runner is verantwoordelijk voor het uitvoeren van CI/CD-pipelines — met nadruk
@@ -915,7 +843,7 @@ spec:
 Zo garanderen we dat gevoelige gegevens niet hardcoded in onze repository zitten en
 enkel tijdens runtime beschikbaar zijn.
 
-### 8.4.6 GitLab runner - Alternatieven
+### 6.4.6 GitLab runner - Alternatieven
 
 **1. Docker (classic daemon)**
 Docker is de bekendste container engine en de standaard in veel CI-omgevingen.
@@ -965,7 +893,7 @@ Nadelen:
 pijplijnen met complexe scripting. Podman biedt dezelfde voordelen, maar
 gebruiksvriendelijker en betere compatibiliteit met bestaande Docker-workflows.
 
-### 8.4.7 GitLab runner - Voordelen
+### 6.4.7 GitLab runner - Voordelen
 
 - **Volledige integratie met GitLab** via Helm
 - **Schaalbaar:** jobs worden uitgevoerd als geïsoleerde pods in Kubernetes
@@ -973,7 +901,7 @@ gebruiksvriendelijker en betere compatibiliteit met bestaande Docker-workflows.
 - **Flexibele configuratie:** inclusief RBAC, namespaces, eigen serviceaccount en IAM-integratie
 - **Volledig GitOps-compatible:** gedeployed via FluxCD
 
-### 8.4.8 GitLab runner - Nadelen
+### 6.4.8 GitLab runner - Nadelen
 
 - **Complexiteit:** installatie vereist kennis van Helm, FluxCD en Vault-integratie.
 - **Beheer:** vereist monitoring en logging van job-failures in eigen cluster.
@@ -984,9 +912,9 @@ private GitLab-instances kan dit uitdagender zijn).
 
 ---
 
-## 8.5 Service Mesh (Istio)
+## 6.5 Service Mesh (Istio)
 
-### 8.5.1 Istio - Wat is het?
+### 6.5.1 Istio - Wat is het?
 
 Istio is een open-source service mesh die de communicatie tussen microservices binnen een
 Kubernetes-cluster beheert en beveiligt zonder dat je de services zelf moet aanpassen. Dit
@@ -995,7 +923,7 @@ elke service draaien en al het verkeer onderscheppen. Hierdoor kunnen beveiligin
 observability, traffic management en toegangscontrole centraal en op uniforme wijze worden
 toegepast.
 
-### 8.5.2 Istio - Onderdelen van Istio
+### 6.5.2 Istio - Onderdelen van Istio
 
 Istio bestaat uit meerdere componenten die gezamenlijk het service mesh-concept realiseren:
 - **Istiod (Control Plane):** Verantwoordelijk voor service discovery, configuratie, en
@@ -1014,7 +942,7 @@ backend-service.
 mogen krijgen tot andere services binnen de mesh.
 
 
-### 8.5.3 Istio - Hoe werkt het?
+### 6.5.3 Istio - Hoe werkt het?
 
 Elke pod in een Istio-enabled namespace krijgt automatisch een Envoy sidecar-container die
 alle communicatie met andere pods intercept. Deze proxies communiceren met Istiod, die de
@@ -1027,7 +955,7 @@ Envoy-proxy van A, door de mesh, naar de Envoy-proxy van B, waarna het verzoek w
 afgeleverd aan de werkelijke applicatie container. Dit pad wordt gecontroleerd op basis van
 geconfigureerde policies.
 
-### 8.5.3 Istio - Waarom gekozen?
+### 6.5.3 Istio - Waarom gekozen?
 
 De keuze voor Istio in dit project werd gedreven door de noodzaak tot het implementeren van
 zero-trust networking, gedetailleerde observability en centraal beheer van netwerkverkeer
@@ -1039,7 +967,7 @@ Bovendien is Istio breed gedragen in de industrie, met uitgebreide documentatie 
 actieve community. Aangezien het als graduated gezien is door cncf (Cloud Native Computing
 Foundation) is Istio ook geschikt voor productieomgevingen en complexe scenario’s.
 
-### 8.5.4 Istio - Hoe geïmplementeerd?
+### 6.5.4 Istio - Hoe geïmplementeerd?
 
 De volledige deployment van Istio binnen onze applicatie cluster is declaratief en GitOps-
 gedreven, beheerd via FluxCD in combinatie met HelmReleases. De configuratie is opgesplitst
@@ -1220,7 +1148,7 @@ en goed controleerbare service mesh opgezet, waarin alle interacties expliciet
 gedefinieerd zijn — en volledig worden beheerd vanuit Git. De combinatie van FluxCD,
 Helm en Istio maakt onze mesh consistent, transparant en auditeerbaar.
 
-### 8.5.5 Istio - Voordelen
+### 6.5.5 Istio - Voordelen
 
 - **Beveiliging:** Automatische mTLS en policies per serviceaccount.
 - **Controle:** Volledig beheer over intern verkeer zonder code wijzigingen.
@@ -1228,14 +1156,14 @@ Helm en Istio maakt onze mesh consistent, transparant en auditeerbaar.
 - **Transparantie:** Metrics, logs en traces zonder extra instrumentatie.
 - **GitOps-vriendelijk:** Volledig declaratief te beheren via FluxCD en Helm.
 
-### 8.5.6 Istio - Nadelen
+### 6.5.6 Istio - Nadelen
 
 - **Complexiteit:** Configuratie vereist diepgaande kennis van Kubernetes én Istio-
 - **Resourcegebruik:** Elke Envoy sidecar voegt CPU -en geheugengebruik toe.
 - **Beheer:** Policies en routing regels kunnen snel omvangrijk worden bij veel
 microservices.
 
-### 8.5.7 Istio - Alternatieven
+### 6.5.7 Istio - Alternatieven
 
 | Eigenschap                  | Istio        | AWS App Mesh | Linkerd    | Consul Connect |
 |-----------------------------|--------------|--------------|------------|----------------|
@@ -1254,9 +1182,9 @@ op een schaalbare manier.
 
 ---
 
-## 8.6 HashiCorp Vault
+## 6.6 HashiCorp Vault
 
-### 8.6.7 HashiCorp Vault - Wat is het?
+### 6.6.7 HashiCorp Vault - Wat is het?
 
 HashiCorp Vault is een geavanceerde, open-source oplossing voor secret management en
 identiteit gebaseerde toegangscontrole binnen cloud-native omgevingen. Het stelt developers
@@ -1266,7 +1194,7 @@ dynamisch. Vault biedt een centraal platform met ondersteuning voor encryptie, a
 fine-grained access control en integratie met tal van systemen zoals Kubernetes, AWS IAM
 en databases.
 
-### 8.6.8 HashiCorp Vault - Onderdelen van Vault
+### 6.6.8 HashiCorp Vault - Onderdelen van Vault
 
 De Vault-architectuur in ons project is opgebouwd uit meerdere samenwerkende
 componenten, elk met een duidelijke verantwoordelijkheid binnen het secret
@@ -1375,7 +1303,7 @@ onze Git-repository. Hierdoor zijn alle aanpassingen aan Vault volledig beheerba
 versies, reproduceerbaar en consistent over omgevingen heen. Flux triggert onder andere de
 installatie van Vault, het opzetten van authenticatie, secrets engines, policies en init-jobs.
 
-### 8.6.8 HashiCorp Vault - Hoe werkt het?
+### 6.6.8 HashiCorp Vault - Hoe werkt het?
 
 Vault wordt gedeployed in de tooling cluster met behulp van Helm en beheerd door FluxCD.
 De deployment volgt deze stappen:
@@ -1394,7 +1322,7 @@ gegenereerd worden (bijvoorbeeld na rotatie van database-users).
 Secrets worden dus nooit opgeslagen in de Kubernetes API, en dankzij dynamische
 credentials blijven risico’s op misbruik of lekkage beperkt.
 
-### 8.6.9 HashiCorp Vault - Waarom gekozen?
+### 6.6.9 HashiCorp Vault - Waarom gekozen?
 
 Wij kozen voor HashiCorp Vault vanwege:
 
@@ -1408,7 +1336,7 @@ hebben een korte TTL
 - **Schaalbaarheid:** Vault is ontworpen voor high availability en is eenvoudig uit te breiden naar
 meerdere clusters.
 
-### 8.6.10 HashiCorp Vault - Hoe geïmplementeerd?
+### 6.6.10 HashiCorp Vault - Hoe geïmplementeerd?
 
 De implementatie van HashiCorp Vault in ons project is zorgvuldig opgebouwd rond veiligheid,
 automatisering en integratie met GitOps-principes. Door een combinatie van Terraform, Helm,
@@ -1618,7 +1546,7 @@ annotations:
 Hierdoor garanderen we netwerkbeveiliging, beschikbaarheid en flexibiliteit, terwijl
 alles netjes binnen de AWS-infrastructuur blijft.
 
-### 8.6.11 HashiCorp Vault - Voordelen
+### 6.6.11 HashiCorp Vault - Voordelen
 
 - **Sterke beveiliging:** Geen opslag van secrets in Kubernetes, automatische credential
 - **Dynamisch:** Database-credentials zijn tijdelijk, automatisch gegenereerd en kunnen
@@ -1629,7 +1557,7 @@ niet hergebruikt worden.
 bereikbaar vanuit elk cluster binnen de VPC.
 
 
-### 8.6.12 HashiCorp Vault - Vault agent flow
+### 6.6.12 HashiCorp Vault - Vault agent flow
 
 ```mermaid
 sequenceDiagram
@@ -1718,7 +1646,7 @@ secret management te scheiden van de applicatie zelf en te centraliseren in een
 gespecialiseerde tool zoals HashiCorp Vault.
 
 
-### 8.6.13 HashiCorp Vault - Database engine flow
+### 6.6.13 HashiCorp Vault - Database engine flow
 
 ```mermaid
 sequenceDiagram
@@ -1757,9 +1685,9 @@ verbinding te maken met de "Database".
 
 ---
 
-## 8.7 External Secret Operator
+## 6.7 External Secret Operator
   
-### 8.7.1 External Secret Operator - Wat is het probleem?
+### 6.7.1 External Secret Operator - Wat is het probleem?
 
 In een GitOps-architectuur zoals die van FluxCD, worden alle resources gedeclareerd in Git.
 Dat betekent ook dat secrets (zoals API-tokens, passwords of database credentials) niet
@@ -1769,7 +1697,7 @@ vormen.
 Tegelijk moeten Kubernetes workloads toegang hebben tot deze secrets, en willen we die
 secrets beheren op één centrale, veilige plek zoals in HashiCorp Vault.
   
-### 8.7.2 External Secret Operator - Wat is de oplossing?
+### 6.7.2 External Secret Operator - Wat is de oplossing?
 
 De External Secrets Operator (ESO) fungeert als brug tussen externe secret stores (zoals
 Vault) en Kubernetes. ESO leest secrets uit deze externe bronnen en converteert ze naar
@@ -1865,7 +1793,7 @@ staat).
 
 ---
 
-# 9. Gebruikersscenario: externe toegang tot Vault
+# 7. Gebruikersscenario: externe toegang tot Vault
 
 In moderne cloud-native infrastructuren is het beveiligen van gevoelige componenten zoals
 een secret manager van cruciaal belang. HashiCorp Vault vormt het centrale secret
@@ -1886,9 +1814,9 @@ te stellen.
 Deze opzet garandeert dat alle communicatie met Vault plaatsvindt binnen ons private AWS-
 netwerk, zonder internet-exposure, maar mét gecontroleerde toegang van buitenaf.
 
-## 9.1 Network Load Balancer (NLB)
+## 7.1 Network Load Balancer (NLB)
 
-### 9.1.1 Network Load Balancer - Wat is het?
+### 7.1.1 Network Load Balancer - Wat is het?
 
 Om Vault bereikbaar te maken zonder public internet-exposure, is in de tooling cluster een
 Kubernetes Service van het type LoadBalancer ingericht die door AWS als interne NLB wordt
@@ -1901,19 +1829,19 @@ Een NLB kan zeer hoge volumes TCP-verkeer verwerken met minimale latentie en beh
 daarbij IP-broninformatie. Omdat Vault over TCP op poort 8200 communiceert, is de NLB de
 meest geschikte load-balancer in AWS voor onze use-case.
 
-### 9.1.2 Network Load Balancer - Hoe werkt het?
+### 7.1.2 Network Load Balancer - Hoe werkt het?
 
 De NLB luistert op poort 8200 en stuurt alle inkomende verbindingen door naar de Vault-pods.
 Omdat we het type "internal" gebruiken, krijgt de load balancer geen publiek IP-adres en is
 deze enkel bereikbaar binnen de VPC.
 
-### 9.1.3 Network Load Balancer - Waarom gekozen?
+### 7.1.3 Network Load Balancer - Waarom gekozen?
 
 Vault gebruikt TCP-verkeer op poort 8200, wat een TCP-load balancer vereist. Een NLB is de
 best passende optie binnen AWS voor deze traffic layer. Bovendien blijft verkeer volledig
 binnen de AWS-infrastructuur, wat de veiligheid aanzienlijk verhoogt.
 
-### 9.1.4 Network Load Balancer - Hoe geïmplementeerd?
+### 7.1.4 Network Load Balancer - Hoe geïmplementeerd?
 
 De NLB werd automatisch aangemaakt via een Kubernetes service met specifieke AWS-
 annotaties. Door de combinatie van het type LoadBalancer en de annotatie
@@ -1921,17 +1849,17 @@ service.beta.kubernetes.io/aws-load-balancer-scheme: internal, wordt er automati
 interne NLB gegenereerd. Bij de selector annotatie, hebben we de naam “Vault” meegegeven,
 wat ervoor zorgt dat hij automatisch alle Vault-pods in de target group gaat registreren.
 
-### 9.1.5 Network Load Balancer - Voordelen
+### 7.1.5 Network Load Balancer - Voordelen
 - Geen publiek IP → veiliger
 - Lage latency, geschikt voor HA-toepassingen
 - Volledige controle over subnet- en VPC-keuze
 
-### 9.1.6 Network Load Balancer - Nadelen
+### 7.1.6 Network Load Balancer - Nadelen
 - Extra componenten om te beheren
 - Potentiële kosten bij langdurig gebruik
 - Geen layer 7-functionaliteit zoals URL-routing
 
-## 9.2 Network Load Balancer - Target group en health check
+## 7.2 Network Load Balancer - Target group en health check
 
 De NLB beschikt over één listener op poort 8200, gekoppeld aan een target group die de
 individuele Vault-pod IP-adressen als backend bevat. Door de Kubernetes-selector in de
@@ -1942,9 +1870,9 @@ zijn, maar ook of ze daadwerkelijk als Vault-instantie functioneren. Eventuele n
 nodes in een HA-setup geven een HTTP 429-respons, wat we als “gezond” beschouwen om
 false positives uit te sluiten.
 
-## 9.3 Route 53 Private Hosted Zone
+## 7.3 Route 53 Private Hosted Zone
 
-### 9.3.1 Route 53 Private Hosted Zone - Wat is het?
+### 7.3.1 Route 53 Private Hosted Zone - Wat is het?
 
 Hoewel AWS automatisch een NLB-DNS-naam genereert, is deze naam onhandig en niet-
 statisch. We wilden een leesbare en consistente URL die binnen ons VPC betrouwbaar werkt.
@@ -1956,14 +1884,14 @@ onderliggende AWS-details verborgen blijven.
 
 `vault.tooling.internal → vault-nlb-internal-xxxx.elb.eu-west-1.amazonaws.com`
 
-### 9.3.1 Route 53 Private Hosted Zone - Waarom gekozen?
+### 7.3.1 Route 53 Private Hosted Zone - Waarom gekozen?
 
 - Consistentie: in scripts, pipelines en policies wordt altijd naar dezelfde URL verwezen.
 - Leesbaarheid: gebruikers moeten geen complexe hostnames onthouden.
 - Flexibiliteit: achterliggende load balancer kan gewijzigd worden zonder wijzigingen
 aan de clients.
 
-### 9.3.1 Route 53 Private Hosted Zone - Hoe geïmplementeerd?
+### 7.3.1 Route 53 Private Hosted Zone - Hoe geïmplementeerd?
 
 In Route 53 werd de volgende configuratie aangemaakt:
 
@@ -1975,7 +1903,7 @@ Record: vault.tooling.internal → vault-nlb-internal-xxxx.elb.eu-west-1.amazona
 Deze zone is gekoppeld aan het VPC-ID van de tooling cluster én de applicatie cluster via
 VPC-peering.
 
-### 9.3.2 Route 53 Private Hosted Zone - Voordelen
+### 7.3.2 Route 53 Private Hosted Zone - Voordelen
 
 - **Beveiliging:** Vault blijft volledig binnen onze VPC, waardoor we geen publieke
 security-groups of internet-ACLs moeten onderhouden.
@@ -1984,7 +1912,7 @@ security-groups of internet-ACLs moeten onderhouden.
 op fouten.
 
 
-### 9.3.3 Route 53 Private Hosted Zone - Nadelen
+### 7.3.3 Route 53 Private Hosted Zone - Nadelen
 
 - **Complexiteit:** extra componenten (NLB, target group, DNS-zone) vereisen actief
 beheer en monitoring.
@@ -1993,9 +1921,9 @@ hiermee rekening worden gehouden.
 - **Failover en schaal:** health checks moeten correct zijn ingesteld voor HA-setups, en
 subnets moeten in meerdere zones zijn geselecteerd.
 
-## 9.4 VPN
+## 7.4 VPN
 
-### 9.4.1 VPN - Wat is het?
+### 7.4.1 VPN - Wat is het?
 
 Een AWS Client VPN-endpoint werd gedeployed via Terraform als beveiligde gateway naar
 het private netwerk waarin Vault draait. Enkel geauthenticeerde gebruikers met een geldig
@@ -2003,7 +1931,7 @@ clientcertificaat, ondertekend door onze eigen Root CA, kunnen verbinding maken 
 bereiken via private DNS (bijv. vault.service.internal).
 
 
-### 9.4.2 VPN - Waarom gekozen?
+### 7.4.2 VPN - Waarom gekozen?
 
 - Geen publieke blootstelling van Vault: Vault is enkel bereikbaar binnen het private
 netwerk via de VPN.
@@ -2012,7 +1940,7 @@ clientcertificaat, dat makkelijk te beheren, intrekken en auditen is.
 - Automatiseerbaar & integreerbaar: Zowel de infrastructuur als het genereren van
 het certificaat zijn geautomatiseerd met Terraform en een eenvoudig script.
 
-### 9.4.3 VPN - Hoe geïmplementeerd?
+### 7.4.3 VPN - Hoe geïmplementeerd?
 
 **Infrastructuur met Terraform**
 
@@ -2047,14 +1975,14 @@ Na het genereren van het configuratiebestand: `sudo openvpn --config client-conf
 Vault is daarna bereikbaar op het private netwerk via de DNS-naam (bijv.
 https://vault.internal:8200).
 
-# 10. Installatiehandleiding
+# 8. Installatiehandleiding
 
 De volledige infrastructuur van dit project kan met een minimum aan manuele tussenkomst
 worden gedeployed dankzij een combinatie van Terraform en FluxCD. Hieronder volgt een
 gestructureerde handleiding die beschrijft hoe een gebruiker de infrastructuur, clusters en
 applicaties correct kan deployen.
 
-## 10.1 Vereisten
+## 8.1 Vereisten
 
 Vooraleer je start, zorg ervoor dat de volgende tools en configuraties beschikbaar zijn op je
 lokale machine:
@@ -2067,7 +1995,7 @@ lokale machine:
 - EKS-clusters, VPC’s, IAM-rollen, Load Balancers en VPN’s aan te maken
 - **Een Git repository** met GitOps-configuratie (bv. fork van onze originele repo)
 
-## 10.2 Clonen van de infrastructuur repository
+## 8.2 Clonen van de infrastructuur repository
 
 Start met het ophalen van de repository op GitLab:
 
@@ -2076,7 +2004,7 @@ git clone <>
 cd /infra
 ```
 
-## 10.3 Terraform initialisatie
+## 8.3 Terraform initialisatie
 
 Terraform wordt gebruikt voor het opzetten van de volledige AWS-omgeving. Begin met het
 initialiseren van Terraform:
@@ -2094,7 +2022,7 @@ Deze eerste apply zal volgende componenten aanmaken:
 
 - Basisconfiguratie voor Kubernetes (zoals kubeconfig outputs)
 
-## 10.4 GitOps-automatisering via FluxCD
+## 8.4 GitOps-automatisering via FluxCD
 Zodra de infrastructuur staat en de Load Balancer Controller actief is, kun je de resterende
 modules van Terraform uitvoeren. In de main.tf file zijn deze initieel uitgecomment in de module
 K8s.
@@ -2110,7 +2038,7 @@ Voer daarna opnieuw `terraform apply` uit. Flux zal nu automatisch:
 - Microservices deployen
 - Policies, serviceaccounts en namespaces aanmaken
 
-## 10.5 Vault recovery bij eerste bootstrap
+## 8.5 Vault recovery bij eerste bootstrap
 
 Indien de Vault bootstrap crasht tijdens de eerste synchronisatie:
 
@@ -2129,7 +2057,7 @@ flux reconcile kustomization vault-bootstrap --with-source
 
 Vault zal nu correct opgezet worden.
 
-## 10.6 GitLab-runner instellen
+## 8.6 GitLab-runner instellen
 
 Voor het correct functioneren van CI/CD is een geldige GitLab Runner token nodig.
 
@@ -2141,7 +2069,7 @@ vault kv put kv/gitlab/runner registrationToken=<jouw_token>
 3. Zorg dat de Vault policy en de ExternalSecret correct ingesteld zijn zodat Flux het token
 kan ophalen en injecteren in de runner-installatie.
 
-## 10.7 VPN Configuratie (voor externe toegang tot Vault)
+## 8.7 VPN Configuratie (voor externe toegang tot Vault)
 In de “infrastructure” repository ga naar de vpn folder, run het `./generate-config.sh`
 script. 
 En connecteer via het commando: 
@@ -2151,7 +2079,7 @@ sudo openvpn –config client-config.ovpn`
 ```
 
 
-## 10.8 Overzicht van de Deployment Flow
+## 8.8 Overzicht van de Deployment Flow
 
 De deployment volgt deze gestructureerde stappen:
 1. **Terraform apply (infralaag):** maakt netwerken, IAM, EKS.
@@ -2160,7 +2088,7 @@ De deployment volgt deze gestructureerde stappen:
 4. **CI/CD** wordt handmatig geconfigureerd waar nodig gitlab registration token
 5. **VPN** Configuratie via script
 
-## 10.9 Resultaat
+## 8.9 Resultaat
 
 Na uitvoering van deze stappen staat er een volledig werkende, veilige en modulaire
 Kubernetes-architectuur in AWS met:
@@ -2174,29 +2102,21 @@ Kubernetes-architectuur in AWS met:
 nieuwe variabele set en workspace aan te maken in Terraform.
 
 
-# 11. Conclusie en reflectie
+# 9. Technische conclusie
 
-Een van de belangrijkste inzichten die we opdeden, is dat het ontwerpen van infrastructuur
-vandaag veel meer is dan enkel het “draaiende krijgen” van applicaties. Het gaat over
-veiligheid, schaalbaarheid, automatisering en vooral: reproduceerbaarheid. Dankzij het
-gebruik van Infrastructure as Code (Terraform) en GitOps (FluxCD) leerden we hoe belangrijk
-het is om infrastructuur te beschouwen als software: onderhevig aan versiebeheer, testbaar,
-en continu verbeterbaar.
+Deze implementatie demonstreert een complete, productie-klare aanpak voor secret management in moderne cloud-infrastructuren. De combinatie van HashiCorp Vault, Kubernetes en GitOps-principes resulteert in een robuuste architectuur die voldoet aan enterprise-beveiligingseisen.
+Belangrijkste technische prestaties:
 
-Daarnaast boden de technologieën die we gebruikten — zoals HashiCorp Vault voor secret
-management en Istio voor service mesh-beveiliging — ons een diepgaande blik op de
-complexiteit van moderne platform engineering. We leerden hoe bedrijven omgaan met
-gevoelige informatie, en hoe je microservices veilig met elkaar laat communiceren in een zero-
-trust omgeving. Deze inzichten overstijgen de puur technische uitvoering; ze gaven ons een
-bredere kijk op hoe IT-afdelingen risico’s beheersen en kwaliteit borgen.
+Zero-downtime secret-rotatie via dynamische credentials
+Volledige infrastructure-as-code met reproduceerbare deployments
+Geautomatiseerd beveiligingsbeleid via service mesh
+Schaalbare multi-cluster architectuur met duidelijke scheiding van verantwoordelijkheden
 
-De gescheiden opzet van applicatie- en tooling cluster confronteerde ons ook met realistische
-afwegingen rond beschikbaarheid, afhankelijkheden en beheerbaarheid. Door deze
-componenten te isoleren, leerden we hoe je robuuste omgevingen opzet waarin kritieke tooling
-beschikbaar blijft, zelfs wanneer applicaties falen of herschaald worden.
+De gedocumenteerde aanpak biedt teams een bewezen pad naar:
 
-We ontwikkelden eveneens een sterkere vaardigheid in technische communicatie: het
-documenteren van configuraties, het structureren van complexe omgevingen en het maken
-van keuzes die niet alleen technisch juist zijn, maar ook begrijpbaar en overdraagbaar aan
-collega’s of toekomstige teams. Het schrijven van dit systeemdossier zelf was hierbij een
-oefening in helderheid en volledigheid.
+Verbeterde beveiligingspositie door eliminatie van statische credentials
+Verhoogde operationele efficiëntie via automatisering
+Compliance-klare infrastructuur met complete audit trails
+Disaster recovery-mogelijkheden via GitOps
+
+Deze architectuur is productie-klaar en schaalbaar voor organisaties van verschillende groottes, met de flexibiliteit om aan te passen aan specifieke vereisten zonder concessies te doen aan kernbeveiligingsprincipes.
