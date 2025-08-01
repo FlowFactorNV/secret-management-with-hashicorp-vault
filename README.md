@@ -33,20 +33,22 @@ git clone [your-repo-url]
 cd /infra
 ```
 
-#### 2. Initialize Terraform
+### 2. Initialize Terraform
+
 ```
 terraform init
 terraform plan
 terraform apply
 ```
 
-#### 3. After infrastructure is created, uncomment modules in main.tf for:
+### 3. After infrastructure is created, uncomment modules in main.tf for:
 
 - Kubernetes modules
 - Flux bootstrap
 - VPN configuration
 
-#### 4. Run Terraform again
+### 4. Run Terraform again
+
 ```
 terraform apply
 ```
@@ -60,10 +62,12 @@ Access Vault at https://vault.tooling.internal:8200
 
 Repository Structure
 
+```
 ├── app-gitops/        # Application configurations (managed by FluxCD)
 ├── docs/              # Full documentation including system dossier
 ├── infrastructure/    # Terraform modules and cluster configurations
 └── tooling-gitops/    # Tooling configurations (Vault, GitLab Runner, ESO)
+```
 
 ## Troubleshooting
 
@@ -89,8 +93,8 @@ vault kv put kv/gitlab/runner registrationToken=<your_token>
 
 For complete details including architecture decisions and implementation notes:
 
-📖 [Full Documentation](docs/en.md) (English)
-📖 [Volledige Documentatie](docs/nl.md) (Nederlands)
+- 📖 [Full Documentation](docs/en.md) (English)
+- 📖 [Volledige Documentatie](docs/nl.md) (Nederlands)
 
 ## Architecture Highlights
 
