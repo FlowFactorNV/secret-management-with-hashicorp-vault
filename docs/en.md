@@ -97,22 +97,8 @@ This project implements a production-ready HashiCorp Vault setup within a multi-
   * [10.9 Result](#109-result)
 - [11. Conclusion and reflection](#11-conclusion-and-reflection)
 
-# 1. Introduction
 
-Modern secret management in cloud-native environments requires a fundamentally different approach than traditional methods. This project demonstrates a complete, production-ready implementation of HashiCorp Vault within a Kubernetes infrastructure on AWS.
-
-The challenge: In dynamic container environments where applications are continuously deployed and scaled, managing secrets (API keys, database credentials, certificates) poses a significant security risk. Hardcoded credentials, plaintext configurations, or manual rotation are no longer acceptable in modern DevOps practices.
-
-The solution: A fully automated, secure, and scalable secret management architecture that:
-- Generates dynamic credentials with limited lifetime
-- Implements zero-trust networking between all services
-- Provides complete audit trails for compliance
-- Seamlessly integrates with GitOps workflows
-
-This document describes the complete implementation, from infrastructure setup to production-ready configuration, including all architecture decisions, security considerations, and practical troubleshooting guides.
-
-
-# 2. Project Overview
+# 1. Project Overview
 
 This project implements an enterprise-grade secret management solution based on HashiCorp Vault within a multi-cluster Kubernetes architecture. The focus is on achieving a secure, scalable, and fully automated environment for managing sensitive data in cloud-native applications.
 
@@ -141,7 +127,7 @@ Security Architecture:
 
 The implementation is designed for teams prioritizing security, scalability, and operational excellence within their Kubernetes environments.
 
-# 3. System Architecture
+# 2. System Architecture
 
 ![Systeemarchitectuur](img/system-architecture.png)
 
@@ -151,7 +137,7 @@ and supporting infrastructure, we consciously chose to divide it into two separa
 clusters (EKS): an application cluster and a tooling cluster. This approach enhances security,
 simplifies management, and allows both environments to be scaled or maintained independently.
 
-# 4. AWS Infrastructure
+# 3. AWS Infrastructure
 
 For application access, we use an Application Load Balancer (ALB) that routes HTTP traffic to the
 frontend and backend of our application. This ALB ensures controlled and structured access to the
@@ -165,7 +151,7 @@ publicly available.
 To make internal services like Vault easily accessible, we use Route 53 private DNS, where the
 domain name `vault.internal` is linked to the URL of the Network Load Balancer.
 
-# 5. Application cluster (EKS-application)
+# 4. Application cluster (EKS-application)
 
 The application cluster contains the core services of a demo application: a frontend, a backend, and
 databases. Within this cluster, a service mesh is also applied (via Istio) to secure and manage
@@ -175,7 +161,7 @@ via Route 53 to communicate with Vault via the internal domain `_vault.internal_
 By separating these components from the infrastructure services, the development and runtime
 environments remain purely separated, which improves stability and security.
 
-# 6. Tooling cluster (EKS-tooling)
+# 5. Tooling cluster (EKS-tooling)
 
 The tooling cluster includes HashiCorp Vault, FluxCD, and a self-hosted GitLab Runner, among others.
 Vault acts as the central secret management system here, while FluxCD is responsible for the GitOps
@@ -186,18 +172,18 @@ This structure creates a modular architecture that combines security and simplic
 components such as Vault can be maintained or modified independently of applications, while
 developers in the application cluster can focus on software development and deployment.
 
-# 7. In-depth look at the tools used
+# 6. In-depth look at the tools used
 
-## 7.1 Terraform (Infrastructure as Code)
+## 6.1 Terraform (Infrastructure as Code)
 
-### 7.1.1 Terraform - What is it?
+### 6.1.1 Terraform - What is it?
 
 Terraform is an open-source tool developed by HashiCorp that allows infrastructure to be managed
 automatically via code. In place of manually creating resources in a cloud console, infrastructure
 is described in a declarative language (HCL – HashiCorp Configuration Language). Terraform then
 ensures that the desired state is achieved, regardless of the current state of the infrastructure.
 
-### 7.1.2 Terraform - How does it work?
+### 6.1.2 Terraform - How does it work?
 
 Terraform reads configuration files that describe what the infrastructure should look like: think
 networks, compute resources, databases, roles, and policies. When executing a `terraform plan`,
@@ -205,7 +191,7 @@ Terraform compares the desired state (as defined in the code) with the existing 
 proposes exactly those changes that are needed to make them match. The execution of `terraform
 apply` ensures that these changes are effectively carried out.
 
-### 7.1.3 Terraform - Why was it chosen?
+### 6.1.3 Terraform - Why was it chosen?
 
 Terraform offers a reliable, scalable, and repeatable way to manage cloud infrastructure. Within our
 project, it was essential that the infrastructure:
@@ -219,7 +205,7 @@ Terraform is moreover the industry standard within Infrastructure as Code and al
 the other tools in our project, such as Helm and FluxCD. As Terraform, like Vault, is also from
 Hashicorp, they work seamlessly together.
 
-### 7.1.4 Terraform - How was it implemented?
+### 6.1.4 Terraform - How was it implemented?
 
 Within this project, Terraform forms the central engine behind our entire AWS infrastructure. To
 keep management scalable, clear, and reusable, we have split the configuration into separate
@@ -285,7 +271,7 @@ The tooling cluster evolves at a different pace than the application cluster. Up
 or reconfigurations of, for example, GitLab Runner or ESO can be carried out without impact on
 production services.
 
-### 7.1.5 Terraform - Advantages
+### 6.1.5 Terraform - Advantages
 
 - Reusability: thanks to modular structure, the infrastructure is easily adaptable for other
 environments or projects.
@@ -302,7 +288,7 @@ code, allowing us to quickly correct deviations.
 - Scalability: new clusters or regions can be easily deployed by reusing existing modules with
 adapted parameters.
 
-### 7.1.6 Terraform - Disadvantages
+### 6.1.6 Terraform - Disadvantages
 
 - Terraform requires a clear structure and good documentation. Without these agreements,
 configurations can quickly become chaotic.
@@ -312,9 +298,9 @@ configurations can quickly become chaotic.
 - Terraform has a learning curve; especially with error messages during apply, debugging is not
 always evident.
 
-## 7.2 Helm
+## 6.2 Helm
 
-### 7.2.1 Helm - What is it?
+### 6.2.1 Helm - What is it?
 
 Helm is a widely used standard for k8s package management. It enables teams to deploy applications
 and infrastructure components in a structured, repeatable way in a Kubernetes cluster with version
@@ -322,7 +308,7 @@ control capabilities. Helm makes it possible to bundle Kubernetes manifests (suc
 Services and ConfigMaps) into so-called charts, with which complex applications can be easily
 managed.
 
-### 7.2.2 Helm - Components of Helm
+### 6.2.2 Helm - Components of Helm
 
 A Helm chart consists of various components that together determine the behavior of the
 installation:
@@ -338,7 +324,7 @@ This structure makes it possible to deploy the same chart in different environme
 staging, production) by simply entering different values via a customized values.yaml file or CLI
 parameters.
 
-### 7.2.3 Helm - How does it work?
+### 6.2.3 Helm - How does it work?
 Helm takes the templates from a chart and combines them with values from the values.yaml file.
 During a helm install or helm upgrade, the generated output is pushed to Kubernetes as standard YAML
 manifests. Because Helm supports version control, previous releases can easily be rolled back with
@@ -347,7 +333,7 @@ helm rollback.
 Helm stores metadata of each release in its own namespace (via secrets or ConfigMaps), so it knows
 exactly which version of a chart is installed, including associated values and status.
 
-### 7.2.4 Helm - Why was it chosen?
+### 6.2.4 Helm - Why was it chosen?
 
 Helm fits seamlessly with the principles of GitOps and Infrastructure as Code. Within our project,
 Helm provides a solution for:
@@ -356,7 +342,7 @@ Helm provides a solution for:
 - Version control of releases per environment (application cluster, tooling cluster)
 - Integration with FluxCD, so that everything can be controlled and rolled out from Git
 
-### 7.2.5 Helm - How was it implemented?
+### 6.2.5 Helm - How was it implemented?
 
 In our architecture, Helm is the standard tool to manage and deploy Kubernetes resources, both for
 infrastructure components and for application services. The implementation comprises multiple
@@ -395,7 +381,7 @@ In case of issues, we can easily roll back to a previous release via helm rollba
 HelmRelease contains an exact chart version and configuration, the behavior of a release is
 perfectly reproducible.
 
-### 7.2.6 Helm - Advantages
+### 6.2.6 Helm - Advantages
 
 - **Reusability:** the same chart can be deployed across multiple environments with adapted
 parameters
@@ -404,7 +390,7 @@ parameters
 - Scalability: easily applicable to tens or hundreds of components
 - Manageability: clear structure of values and configuration per component
 
-### 7.2.7 Helm - Disadvantages
+### 6.2.7 Helm - Disadvantages
 
 - **Complex templating:** for large charts with many conditions or logic, the template behavior can
 be difficult to understand
@@ -419,9 +405,9 @@ By using Helm as the standard deployment mechanism, combined with FluxCD, we hav
 controllable and scalable release pipeline. It enables us to manage, audit and, if necessary,
 restore all components — from Vault and Istio to internal services — in a consistent manner.
 
-## 7.3 GitOps (FluxCD)
+## 6.3 GitOps (FluxCD)
 
-### 7.3.1 FluxCD - What is it?
+### 6.3.1 FluxCD - What is it?
 
 FluxCD is an open-source GitOps tool for Kubernetes that ensures the state of a cluster always
 matches the configuration as it is in a Git-repository. Instead of manually applying Kubernetes
@@ -434,7 +420,7 @@ consistency, auditability and self-healing behavior. Flux also offers the possib
 rollback. This makes it easy if the new configuration contains errors and needs to be set back to a
 previous version.
 
-### 7.3.2 FluxCD - Components of FluxCD
+### 6.3.2 FluxCD - Components of FluxCD
 Flux consists of a number of separate Kubernetes controllers, each with a specific responsibility:
 
 - **Source Controller:** Synchronizes Git-repositories or Helm-repositories to the cluster
@@ -444,7 +430,7 @@ Flux consists of a number of separate Kubernetes controllers, each with a specif
 - **Image Automation Controller (optional):** Automatic image tag updates in Git with new builds
 - **Image Reflector Controller (optioneel):** Fetching new image tags from a repo
 
-### 7.3.3 FluxCD - How does it work?
+### 6.3.3 FluxCD - How does it work?
 
 FluxCD uses a declarative approach: you describe in Git how your infrastructure and applications
 should look. The controllers of FluxCD constantly compare the current state of the cluster with this
@@ -468,7 +454,7 @@ A -- Flux synx watches Git --> B -- Pulls updated manifests --> C -- Deploy upda
 image tag --> D
 ```
 
-### 7.3.4 FluxCD - Why was it chosen?
+### 6.3.4 FluxCD - Why was it chosen?
 
 We chose FluxCD for the following reasons:
 
@@ -480,7 +466,7 @@ We chose FluxCD for the following reasons:
 Operator or SOPS)
 - **Version control:** if desired, we can easily perform a rollback to an earlier version
 
-### 7.3.5 FluxCD - How was it implemented?
+### 6.3.5 FluxCD - How was it implemented?
 
 FluxCD was deployed by us via Terraform using the official Flux Terraform provider. For each cluster
 (both tooling and application) a separate GitOps folder was created:
@@ -621,14 +607,14 @@ After this adjustment, the Image Automation Controller executes a commit and pus
 Git-repository. This reactivates the standard FluxCD flow: Source Controller detects the change →
 Helm Controller executes an upgrade → Kubernetes gets the new version rolled out.
 
-### 7.3.6 FluxCD - Advantages
+### 6.3.6 FluxCD - Advantages
 - Fully Git-based management with version control
 - Self-healing: automatically recovers from deviations from the Git-state
 - Multi-cluster support: easy to set up with one Git-repo for multiple clusters
 - Integration with Helm simplifies lifecycle management of applications
 - Easily extendable with notifications, secrets and image automation
 
-### 7.3.7 FluxCD - Disadvantages
+### 6.3.7 FluxCD - Disadvantages
  
 - No built-in GUI (unlike ArgoCD), which makes debugging more difficult for beginners
 
@@ -653,9 +639,9 @@ seamless compatibility with Helm and Vault.
 For our project, FluxCD was the best choice due to its simplicity, native Kubernetes integration and
 seamless compatibility with Helm and Vault.
 
-## 7.4 - Self-hosted GitLab runner
+## 6.4 - Self-hosted GitLab runner
 
-### 7.4.1 GitLab runner - What is it?
+### 6.4.1 GitLab runner - What is it?
 
 The GitLab Runner is an open-source component of GitLab that is responsible for executing CI/CD
 pipelines. It is the engine that effectively performs tasks such as building, testing and deploying
@@ -664,7 +650,7 @@ in a Kubernetes cluster. In our project, we chose a self-hosted runner that runs
 workload within the tooling cluster. We opted for a self-hosted runner because it allows us to
 execute unlimited jobs without incurring costs.
 
-### 7.4.2 GitLab runner - Components of Gitlab Runner
+### 6.4.2 GitLab runner - Components of Gitlab Runner
 
 The GitLab Runner installation includes:
 
@@ -674,14 +660,14 @@ The GitLab Runner installation includes:
 - Helm Chart: to install and manage the runner as a Kubernetes workload.
 - Secrets/Registration Token: authentication to connect to the correct GitLab project runner.
 
-### 7.4.3 GitLab runner - How does it work?
+### 6.4.3 GitLab runner - How does it work?
 
 When a developer makes a commit on GitLab, this triggers a pipeline defined in the .gitlab-ci.yml.
 GitLab sends this job to a registered runner. Our runner runs in Kubernetes and uses the kubernetes
 executor. Upon receiving a job, the runner creates a pod with containers responsible for the build,
 tests and any deploy tasks. Once the job is finished, the pods are automatically cleaned up.
 
-### 7.4.4 GitLab runner - Why was it chosen?
+### 6.4.4 GitLab runner - Why was it chosen?
 
 We chose a self-hosted GitLab Runner in Kubernetes for several reasons:
 - **Full control** over the execution and configuration of CI/CD tasks.
@@ -691,7 +677,7 @@ We chose a self-hosted GitLab Runner in Kubernetes for several reasons:
 minutes.
 **Flexible configuration:** such as the use of custom images, node selectors and resource limits.
 
-### 7.4.5 GitLab runner - How was it implemented?
+### 6.4.5 GitLab runner - How was it implemented?
 
 Our GitLab Runner is deployed within the tooling cluster via a fully GitOps-driven workflow. The
 runner is responsible for executing CI/CD pipelines — with emphasis on building container images
@@ -783,7 +769,7 @@ spec:
 Thus we guarantee that sensitive data is not hardcoded in our repository and is only available
 during runtime.
 
-### 7.4.6 GitLab runner - Alternatives
+### 6.4.6 GitLab runner - Alternatives
 
 **1. Docker (classic daemon)**
 Docker is the best-known container engine and the standard in many CI environments.
@@ -833,7 +819,7 @@ Disadvantages:
 scripting. Podman offers the same advantages, but is more user-friendly and better compatible with
 existing Docker workflows.
 
-### 7.4.7 GitLab runner - Advantages
+### 6.4.7 GitLab runner - Advantages
 
 - **Full integration with GitLab** via Helm
 - **Scalable:** jobs are executed as isolated pods in Kubernetes
@@ -842,7 +828,7 @@ existing Docker workflows.
 IAM-integration
 - **Fully GitOps-compatible:** deployed via FluxCD
 
-### 7.4.8 GitLab runner - Disadvantages
+### 6.4.8 GitLab runner - Disadvantages
 
 - **Complexity:** installation requires knowledge of Helm, FluxCD and Vault-integration.
 - **Management:** requires monitoring and logging of job-failures in its own cluster.
@@ -852,9 +838,9 @@ GitLab-instances this can be more challenging).
 
 ---
 
-## 7.5 Service Mesh (Istio)
+## 6.5 Service Mesh (Istio)
 
-### 7.5.1 Istio - What is it?
+### 6.5.1 Istio - What is it?
 
 Istio is an open-source service mesh that manages and secures communication between microservices
 within a Kubernetes-cluster without you having to adapt the services themselves. This happens by
@@ -862,7 +848,7 @@ using so-called sidecar proxies (usually Envoy), which run next to each service 
 traffic. This allows security, observability, traffic management and access control to be applied
 centrally and uniformly.
 
-### 7.5.2 Istio - Components of Istio
+### 6.5.2 Istio - Components of Istio
 
 Istio consists of multiple components that together realize the service mesh concept:
 - **Istiod (Control Plane):** Responsible for service discovery, configuration, and certificate
@@ -879,7 +865,7 @@ balancing).
 - **AuthorizationPolicies:** Determine which services or service accounts are allowed to access
 other services within the mesh.
 
-### 7.5.3 Istio - How does it work?
+### 6.5.3 Istio - How does it work?
 
 Each pod in an Istio-enabled namespace automatically gets an Envoy sidecar-container that intercepts
 all communication with other pods. These proxies communicate with Istiod, which provides the
@@ -891,7 +877,7 @@ For example, when service A sends a request to service B, this request goes via 
 A, through the mesh, to the Envoy-proxy of B, after which the request is delivered to the actual
 application container. This path is controlled based on configured policies.
 
-### 7.5.3 Istio - Why was it chosen?
+### 6.5.3 Istio - Why was it chosen?
 
 The choice for Istio in this project was driven by the need to implement zero-trust networking,
 detailed observability and central management of network traffic within the application cluster.
@@ -902,7 +888,7 @@ Moreover, Istio is widely adopted in the industry, with extensive documentation 
 community. Since it is considered graduated by CNCF (Cloud Native Computing Foundation), Istio is
 also suitable for production environments and complex scenarios.
 
-### 7.5.4 Istio - How was it implemented?
+### 6.5.4 Istio - How was it implemented?
 
 The full deployment of Istio within our application cluster is declarative and GitOps-driven,
 managed via FluxCD in combination with HelmReleases. The configuration is split into logical
@@ -1077,7 +1063,7 @@ Thanks to this setup, we have set up a fully secured, dynamically configurable a
 service mesh, in which all interactions are explicitly defined — and are fully managed from Git.
 The combination of FluxCD, Helm and Istio makes our mesh consistent, transparent and auditable.
 
-### 7.5.5 Istio - Advantages
+### 6.5.5 Istio - Advantages
 
 - **Security:** Automatic mTLS and policies per serviceaccount.
 - **Control:** Full management over internal traffic without code changes.
@@ -1085,13 +1071,13 @@ The combination of FluxCD, Helm and Istio makes our mesh consistent, transparent
 - **Transparency:** Metrics, logs and traces without extra instrumentation.
 - **GitOps-friendly:** Fully declaratively manageable via FluxCD and Helm.
 
-### 7.5.6 Istio - Disadvantages
+### 6.5.6 Istio - Disadvantages
 
 - **Complexity:** Configuration requires in-depth knowledge of Kubernetes AND Istio-
 - **Resource usage:** Each Envoy sidecar adds CPU and memory usage.
 - **Management:** Policies and routing rules can quickly become extensive with many microservices.
 
-### 7.5.7 Istio - Alternatives
+### 6.5.7 Istio - Alternatives
 
 | Feature                    | Istio       | AWS App Mesh | Linkerd    | Consul Connect |
 |----------------------------|-------------|--------------|------------|----------------|
@@ -1109,9 +1095,9 @@ centrally enforce observability, service-identity and network behavior in a scal
 
 ---
 
-## 7.6 HashiCorp Vault
+## 6.6 HashiCorp Vault
 
-### 7.6.7 HashiCorp Vault - What is it?
+### 6.6.7 HashiCorp Vault - What is it?
 
 HashiCorp Vault is an advanced, open-source solution for secret management and identity-based access
 control within cloud-native environments. It enables developers and operators to securely and
@@ -1120,7 +1106,7 @@ both statically and dynamically. Vault offers a central platform with support fo
 logs, fine-grained access control and integration with numerous systems such as Kubernetes, AWS IAM
 and databases.
 
-### 7.6.8 HashiCorp Vault - Components of Vault
+### 6.6.8 HashiCorp Vault - Components of Vault
 
 The Vault-architecture in our project is built from multiple collaborating components, each with a
 clear responsibility within the secret management process. Together, they ensure a secure, automated
@@ -1221,7 +1207,7 @@ automatic synchronization with our Git-repository. This makes all Vault changes 
 with versions, reproducible and consistent across environments. Flux triggers, among other things,
 the installation of Vault, the setup of authentication, secrets engines, policies and init jobs.
 
-### 7.6.8 HashiCorp Vault - How does it work?
+### 6.6.8 HashiCorp Vault - How does it work?
 
 Vault is deployed in the tooling cluster with the help of Helm and is managed by FluxCD. The
 deployment follows these steps:
@@ -1240,7 +1226,7 @@ example, after rotation of database-users).
 Secrets are therefore never stored in the Kubernetes API, and thanks to dynamic credentials, risks
 of misuse or leakage remain limited.
 
-### 7.6.9 HashiCorp Vault - Why was it chosen?
+### 6.6.9 HashiCorp Vault - Why was it chosen?
 
 We chose HashiCorp Vault because of:
 
@@ -1254,7 +1240,7 @@ with versions.
 - **Scalability:** Vault is designed for high availability and is easily extensible to multiple
 clusters.
 
-### 7.6.10 HashiCorp Vault - How was it implemented?
+### 6.6.10 HashiCorp Vault - How was it implemented?
 
 The implementation of HashiCorp Vault in our project is carefully built around security, automation,
 and integration with GitOps principles. Through a combination of Terraform, Helm, FluxCD, and
@@ -1456,7 +1442,7 @@ annotations:
 This ensures network security, availability and flexibility, while everything remains neatly within
 the AWS-infrastructure.
 
-### 7.6.11 HashiCorp Vault - Advantages
+### 6.6.11 HashiCorp Vault - Advantages
 
 - **Strong security:** No storage of secrets in Kubernetes, automatic credential
 - **Dynamic:** Database-credentials are temporary, automatically generated and cannot be reused.
@@ -1466,7 +1452,7 @@ versions.
 - **Cluster-wide access:** Thanks to the use of an internal NLB and DNS-abstraction, Vault is
 reachable from any cluster within the VPC.
 
-### 7.6.12 HashiCorp Vault - Vault agent flow
+### 6.6.12 HashiCorp Vault - Vault agent flow
 
 ```mermaid
 sequenceDiagram
@@ -1543,7 +1529,7 @@ In short, the Vault Agent-flow offers a robust, secure, and automated way to pro
 Kubernetes access to secrets, by separating the complexity and risks of secret management from the
 application itself and centralizing it in a specialized tool such as HashiCorp Vault.
 
-### 7.6.13 HashiCorp Vault - Database engine flow
+### 6.6.13 HashiCorp Vault - Database engine flow
 
 ```mermaid
 sequenceDiagram
@@ -1580,9 +1566,9 @@ automatically revoked or deleted by Vault.
 
 ---
 
-## 7.7 External Secret Operator
+## 6.7 External Secret Operator
   
-### 7.7.1 External Secret Operator - What is the problem?
+### 6.7.1 External Secret Operator - What is the problem?
 
 In a GitOps-architecture like that of FluxCD, all resources are declared in Git. This also means
 that secrets (such as API-tokens, passwords or database credentials) cannot simply be put in Git as
@@ -1591,7 +1577,7 @@ plaintext — which would pose a serious security risk.
 At the same time, Kubernetes workloads need access to these secrets, and we want to manage those
 secrets in one central, secure place like HashiCorp Vault.
   
-### 7.7.2 External Secret Operator - What is the solution?
+### 6.7.2 External Secret Operator - What is the solution?
 
 The External Secrets Operator (ESO) functions as a bridge between external secret stores (like
 Vault) and Kubernetes. ESO reads secrets from these external sources and converts them to Kubernetes
@@ -1694,9 +1680,9 @@ To solve this problem, we have chosen a combination of:
 This setup guarantees that all communication with Vault takes place within our private AWS-network,
 without internet-exposure, but with controlled external access.
 
-## 8.1 Network Load Balancer (NLB)
+## 7.1 Network Load Balancer (NLB)
 
-### 8.1.1 Network Load Balancer - What is it?
+### 7.1.1 Network Load Balancer - What is it?
 
 To make Vault accessible without public internet-exposure, a Kubernetes Service of type LoadBalancer
 has been configured in the tooling cluster that is managed by AWS as an internal NLB. This service
@@ -1709,19 +1695,19 @@ An NLB can process very high volumes of TCP-traffic with minimal latency and mai
 information. Because Vault communicates over TCP on port 8200, the NLB is the most suitable
 load-balancer in AWS for our use-case.
 
-### 8.1.2 Network Load Balancer - How does it work?
+### 7.1.2 Network Load Balancer - How does it work?
 
 The NLB listens on port 8200 and forwards all incoming connections to the Vault-pods. Because we use
 the "internal" type, the load balancer does not get a public IP-address and is only accessible
 within the VPC.
 
-### 8.1.3 Network Load Balancer - Why was it chosen?
+### 7.1.3 Network Load Balancer - Why was it chosen?
 
 Vault uses TCP-traffic on port 8200, which requires a TCP-load balancer. An NLB is the best fitting
 option within AWS for this traffic layer. Moreover, traffic remains completely within the
 AWS-infrastructure, which significantly increases security.
 
-### 8.1.4 Network Load Balancer - How was it implemented?
+### 7.1.4 Network Load Balancer - How was it implemented?
 
 The NLB was automatically created via a Kubernetes service with specific AWS-annotations. By
 combining the LoadBalancer type and the annotation
@@ -1729,17 +1715,17 @@ service.beta.kubernetes.io/aws-load-balancer-scheme: internal, an internal NLB i
 generated. For the selector annotation, we have given the name “Vault”, which ensures that it
 automatically registers all Vault-pods in the target group.
 
-### 8.1.5 Network Load Balancer - Advantages
+### 7.1.5 Network Load Balancer - Advantages
 - No public IP → safer
 - Low latency, suitable for HA-applications
 - Full control over subnet and VPC-choice
 
-### 8.1.6 Network Load Balancer - Disadvantages
+### 7.1.6 Network Load Balancer - Disadvantages
 - Additional components to manage
 - Potential costs with long-term use
 - No layer 7-functionality such as URL-routing
 
-## 8.2 Network Load Balancer - Target group and health check
+## 7.2 Network Load Balancer - Target group and health check
 
 The NLB has one listener on port 8200, linked to a target group that contains the individual
 Vault-pod IP-addresses as backend. Through the Kubernetes-selector in the service configuration, all
@@ -1749,9 +1735,9 @@ whether the pods are accessible, but also whether they actually function as a Va
 non-leader-nodes in an HA-setup give an HTTP 429-response, which we consider “healthy” to
 exclude false positives.
 
-## 8.3 Route 53 Private Hosted Zone
+## 7.3 Route 53 Private Hosted Zone
 
-### 8.3.1 Route 53 Private Hosted Zone - What is it?
+### 7.3.1 Route 53 Private Hosted Zone - What is it?
 
 Although AWS automatically generates an NLB-DNS-name, this name is inconvenient and non-static. We
 wanted a readable and consistent URL that works reliably within our VPC. Therefore, in Route 53, we
@@ -1762,13 +1748,13 @@ self-declared URL, while the underlying AWS-details remain hidden.
 
 `vault.tooling.internal → vault-nlb-internal-xxxx.elb.eu-west-1.amazonaws.com`
 
-### 8.3.1 Route 53 Private Hosted Zone - Why was it chosen?
+### 7.3.1 Route 53 Private Hosted Zone - Why was it chosen?
 
 - Consistency: in scripts, pipelines and policies, the same URL is always referred to.
 - Readability: users do not have to remember complex hostnames.
 - Flexibility: underlying load balancer can be changed without changes to the clients.
 
-### 8.3.1 Route 53 Private Hosted Zone - How was it implemented?
+### 7.3.1 Route 53 Private Hosted Zone - How was it implemented?
 
 In Route 53, the following configuration was created:
 
@@ -1780,14 +1766,14 @@ Record: vault.tooling.internal → vault-nlb-internal-xxxx.elb.eu-west-1.amazona
 This zone is linked to the VPC-ID of the tooling cluster AND the application cluster via
 VPC-peering.
 
-### 8.3.2 Route 53 Private Hosted Zone - Advantages
+### 7.3.2 Route 53 Private Hosted Zone - Advantages
 
 - **Security:** Vault remains completely within our VPC, so we do not have to maintain public
 security-groups or internet-ACLs.
 - **Automation:** Kubernetes regulates registration of Vault-pods in the target group.
 - **Ease of use:** clear DNS-name improves readability and reduces the chance of errors.
 
-### 8.3.3 Route 53 Private Hosted Zone - Disadvantages
+### 7.3.3 Route 53 Private Hosted Zone - Disadvantages
 
 - **Complexity:** extra components (NLB, target group, DNS-zone) require active management and
 monitoring.
@@ -1796,15 +1782,15 @@ analysis.
 - **Failover and scale:** health checks must be correctly configured for HA-setups, and subnets must
 be selected in multiple zones.
 
-## 8.4 VPN
+## 7.4 VPN
 
-### 8.4.1 VPN - What is it?
+### 7.4.1 VPN - What is it?
 
 An AWS Client VPN-endpoint was deployed via Terraform as a secured gateway to the private network in
 which Vault runs. Only authenticated users with a valid client certificate, signed by our own Root
 CA, can connect and reach Vault via private DNS (e.g. vault.service.internal).
 
-### 8.4.2 VPN - Why was it chosen?
+### 7.4.2 VPN - Why was it chosen?
 
 - No public exposure of Vault: Vault is only accessible within the private network via the VPN.
 - Manageable access: Each user receives a unique, self-signed client certificate, which is easy to
@@ -1812,7 +1798,7 @@ manage, revoke and audit.
 - Automatable & integratable: Both the infrastructure and the generation of the certificate are
 automated with Terraform and a simple script.
 
-### 8.4.3 VPN - How was it implemented?
+### 7.4.3 VPN - How was it implemented?
 
 **Infrastructure with Terraform**
 
@@ -1844,13 +1830,13 @@ After generating the configuration file: `sudo openvpn --config client-config.ov
 
 Vault is then accessible on the private network via the DNS-name (e.g. https://vault.internal:8200).
 
-# 9. Installation Guide
+# 8. Installation Guide
 
 The full infrastructure of this project can be deployed with a minimum of manual intervention thanks
 to a combination of Terraform and FluxCD. Below is a structured guide that describes how a user can
 correctly deploy the infrastructure, clusters and applications.
 
-## 9.1 Requirements
+## 8.1 Requirements
 
 Before you start, make sure the following tools and configurations are available on your local
 machine:
@@ -1863,7 +1849,7 @@ machine:
 - Create EKS-clusters, VPCs, IAM-roles, Load Balancers and VPNs
 - **A Git repository** with GitOps-configuration (e.g. fork of our original repo)
 
-## 9.2 Cloning the infrastructure repository
+## 8.2 Cloning the infrastructure repository
 
 Start by fetching the repository on GitLab:
 
@@ -1872,7 +1858,7 @@ git clone <>
 cd /infra
 ```
 
-## 9.3 Terraform initialization
+## 8.3 Terraform initialization
 
 Terraform is used to set up the entire AWS-environment. Start by initializing Terraform:
 
@@ -1889,7 +1875,7 @@ This first apply will create the following components:
 
 - Basic configuration for Kubernetes (such as kubeconfig outputs)
 
-## 9.4 GitOps-automation via FluxCD
+## 8.4 GitOps-automation via FluxCD
 Once the infrastructure is up and the Load Balancer Controller is active, you can execute the
 remaining modules of Terraform. In the main.tf file these are initially commented out in the module
 K8s.
@@ -1905,7 +1891,7 @@ Then execute `terraform apply` again. Flux will now automatically:
 - Deploy microservices
 - Create policies, serviceaccounts and namespaces
 
-## 9.5 Vault recovery on first bootstrap
+## 8.5 Vault recovery on first bootstrap
 
 If the Vault bootstrap crashes during the first synchronization:
 
@@ -1924,7 +1910,7 @@ flux reconcile kustomization vault-bootstrap --with-source
 
 Vault will now be set up correctly.
 
-## 9.6 GitLab-runner setup
+## 8.6 GitLab-runner setup
 
 For the correct functioning of CI/CD, a valid GitLab Runner token is needed.
 
@@ -1936,7 +1922,7 @@ vault kv put kv/gitlab/runner registrationToken=<your_token>
 3. Ensure that the Vault policy and the ExternalSecret are correctly set up so that Flux can fetch
 the token and inject it into the runner-installation.
 
-## 9.7 VPN Configuration (for external access to Vault)
+## 8.7 VPN Configuration (for external access to Vault)
 In the “infrastructure” repository go to the vpn folder, run the `./generate-config.sh`
 script. 
 And connect via the command: 
@@ -1945,7 +1931,7 @@ And connect via the command:
 sudo openvpn –config client-config.ovpn`
 ```
 
-## 9.8 Overview of the Deployment Flow
+## 8.8 Overview of the Deployment Flow
 
 The deployment follows these structured steps:
 1. **Terraform apply (infra layer):** creates networks, IAM, EKS.
@@ -1954,7 +1940,7 @@ The deployment follows these structured steps:
 4. **CI/CD** is manually configured where needed (gitlab registration token).
 5. **VPN** Configuration via script
 
-## 9.9 Result
+## 8.9 Result
 
 After executing these steps, a fully functional, secure, and modular Kubernetes-architecture in AWS
 is in place with:
@@ -1967,7 +1953,7 @@ is in place with:
 - If desired, this process can be easily replicated to other regions by creating a new variable set
 and workspace in Terraform.
 
-# 10. Technical conclusion
+# 9. Technical conclusion
 
 This implementation demonstrates a complete, production-ready approach to secret management in modern cloud infrastructures. The combination of HashiCorp Vault, Kubernetes, and GitOps principles results in a robust architecture that meets enterprise security requirements.
 
@@ -1985,4 +1971,4 @@ The documented approach provides teams with a proven path to:
 
 This architecture is production-ready and scalable for organizations of various sizes, with the flexibility to adapt to specific requirements without compromising core security principles.
 
-63
+
